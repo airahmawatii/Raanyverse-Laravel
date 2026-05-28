@@ -1,0 +1,25 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="outfit text-3xl font-black text-[#3e342f]">Edit Daerah</h2>
+    </x-slot>
+
+    <div class="py-10">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)] rounded-[2.5rem] p-8 md:p-12 ">
+                <form action="{{ route('regions.update', $region->id) }}" method="POST" class="space-y-6">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Nama Daerah</label>
+                        <input type="text" name="name" value="{{ $region->name }}" required class="w-full bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)] rounded-xl px-4 py-3 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">
+                    </div>
+                    <div class="pt-6 border-t border-[rgba(183,92,28,0.1)]">
+                        <button type="submit" class="w-full py-4 rounded-xl font-black text-xs tracking-widest uppercase text-white transition-all hover:opacity-90" style="background: linear-gradient(135deg, #d97706 0%, #92400e 100%);">
+                            Perbarui Daerah
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

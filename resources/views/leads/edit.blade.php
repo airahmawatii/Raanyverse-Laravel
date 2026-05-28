@@ -1,0 +1,85 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center gap-4">
+            <a href="{{ route('leads.index') }}" class="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)] text-stone-500 hover:text-[#3e342f] hover:bg-white/10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            <div>
+                <h2 class="outfit text-3xl font-black text-[#3e342f]">Edit <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#b75c1c] to-[#a65319]">Leads Pipeline</span></h2>
+                <p class="text-xs font-bold text-stone-500 uppercase tracking-widest mt-1">Perbarui Progres Calon Penyewa</p>
+            </div>
+        </div>
+    </x-slot>
+
+    <div class="py-8 px-2">
+        <div class="max-w-3xl mx-auto">
+            <div class="rounded-[2rem] p-6 md:p-10  bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)]">
+                
+                <form action="{{ route('leads.update', $lead->id) }}" method="POST" class="space-y-6">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Nama Calon Penyewa</label>
+                            <input type="text" name="name" value="{{ $lead->name }}" required class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Nomor WhatsApp / HP</label>
+                            <input type="text" name="phone" value="{{ $lead->phone }}" required class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Email (Opsional)</label>
+                            <input type="email" name="email" value="{{ $lead->email }}" class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Unit Minat</label>
+                            <select name="interested_unit_id" class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all appearance-none">
+                                <option value="">Semua / Tertarik Umum</option>
+                                @foreach($units as $unit)
+                                    <option value="{{ $unit->id }}" @selected($lead->interested_unit_id == $unit->id)>{{ $unit->name }} ({{ $unit->status }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Status Pipeline</label>
+                            <select name="status" required class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all appearance-none">
+                                <option value="lead" @selected($lead->status === 'lead')>Leads Baru</option>
+                                <option value="survey" @selected($lead->status === 'survey')>Jadwal Survei Lokasi</option>
+                                <option value="negotiation" @selected($lead->status === 'negotiation')>Negosiasi</option>
+                                <option value="deal" @selected($lead->status === 'deal')>Deal (Berhasil Sewa)</option>
+                                <option value="lost" @selected($lead->status === 'lost')>Lost (Batal/Gagal)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Jadwal Survei</label>
+                            <input type="date" name="survey_date" value="{{ $lead->survey_date }}" class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Catatan CRM</label>
+                        <textarea name="notes" rows="4" class="w-full bg-[#fdfbf7]/50 border border-[rgba(183,92,28,0.1)] rounded-2xl px-6 py-4 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">{{ $lead->notes }}</textarea>
+                    </div>
+
+                    <div class="pt-6">
+                        <button type="submit" class="w-full flex justify-center items-center gap-3 px-8 py-5 rounded-2xl font-black text-sm tracking-widest uppercase text-white transition-all hover:-translate-y-1"
+                                style="background: linear-gradient(135deg, #d97706 0%, #92400e 100%); box-shadow: 0 8px 20px rgba(183,92,28,0.3);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Perbarui Data Lead
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
