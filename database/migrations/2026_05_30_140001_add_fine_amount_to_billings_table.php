@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('type');
-            $table->decimal('price', 15, 2);
-            $table->enum('status', ['available', 'occupied'])->default('available');
-            $table->timestamps();
+        Schema::table('billings', function (Blueprint $table) {
+            $table->decimal('fine_amount', 15, 2)->default(0)->after('amount');
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('units');
+        Schema::table('billings', function (Blueprint $table) {
+            $table->dropColumn('fine_amount');
+        });
     }
 };

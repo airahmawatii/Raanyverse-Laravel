@@ -99,6 +99,12 @@
                                 <td class="px-8 py-6 whitespace-nowrap">
                                     <div class="text-base font-bold text-[#3e342f] outfit">Rp {{ number_format($billing->amount, 0, ',', '.') }}</div>
                                     <div class="text-[9px] text-stone-500 font-bold mt-0.5 uppercase tracking-widest">Sisa: Rp {{ number_format($billing->amount - $billing->paid_amount, 0, ',', '.') }}</div>
+                                    @if($billing->fine_amount > 0)
+                                    <div class="text-[10px] text-rose-600 font-black mt-1 uppercase tracking-wider flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        Denda: Rp {{ number_format($billing->fine_amount, 0, ',', '.') }}
+                                    </div>
+                                    @endif
                                 </td>
                                 {{-- Terbayar + Progress --}}
                                 <td class="px-8 py-6 whitespace-nowrap">
@@ -139,18 +145,28 @@
                                             </button>
                                         </form>
                                         @else
-                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center ml-auto bg-emerald-50 border border-emerald-100">
-                                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-50 border border-emerald-100">
+                                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                            </div>
+                                            <a href="{{ route('billings.receipt', $billing->id) }}" target="_blank" class="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 transition-all" title="Unduh Kuitansi">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            </a>
                                         </div>
                                         @endif
                                     @else
                                         @if($billing->status === 'unpaid')
-                                        <button type="button" onclick="payWithMidtrans({{ $billing->id }})" class="px-5 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 shadow-sm text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100">
+                                        <button type="button" onclick="payWithDuitku({{ $billing->id }})" class="px-5 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 shadow-sm text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100">
                                             Bayar Sekarang
                                         </button>
                                         @else
-                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center ml-auto bg-emerald-50 border border-emerald-100">
-                                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-50 border border-emerald-100">
+                                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                            </div>
+                                            <a href="{{ route('billings.receipt', $billing->id) }}" target="_blank" class="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 transition-all" title="Unduh Kuitansi">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            </a>
                                         </div>
                                         @endif
                                     @endif
@@ -169,14 +185,8 @@
         </div>
     </div>
     
-    {{-- Midtrans Snap JS --}}
-    @if(config('midtrans.is_production'))
-        <script type="text/javascript" src="https://app.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
-    @else
-        <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
-    @endif
     <script type="text/javascript">
-        function payWithMidtrans(billingId) {
+        function payWithDuitku(billingId) {
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = 'MEMPROSES...';
@@ -188,29 +198,11 @@
                     btn.innerText = originalText;
                     btn.disabled = false;
 
-                    if (data.success) {
-                        window.snap.pay(data.snap_token, {
-                            onSuccess: function(result) {
-                                // Kirim kelunasan ke backend melalui bypass
-                                fetch(`/api/payments/notification?simulate=true&order_id=${result.order_id}&gross_amount=${result.gross_amount}`)
-                                    .then(() => {
-                                        alert("Pembayaran Berhasil! Halaman akan dimuat ulang.");
-                                        window.location.reload();
-                                    });
-                            },
-                            onPending: function(result) {
-                                alert("Menunggu Pembayaran!");
-                                window.location.reload();
-                            },
-                            onError: function(result) {
-                                alert("Pembayaran Gagal!");
-                            },
-                            onClose: function() {
-                                alert('Anda menutup popup sebelum menyelesaikan pembayaran.');
-                            }
-                        });
+                    if (data.success && data.payment_url) {
+                        // Redirect directly to Duitku Sandbox / Passport Checkout URL
+                        window.location.href = data.payment_url;
                     } else {
-                        alert("Gagal memicu Midtrans: " + data.message);
+                        alert("Gagal memproses pembayaran Duitku: " + (data.message || 'Unknown error'));
                     }
                 })
                 .catch(error => {

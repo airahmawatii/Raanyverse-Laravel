@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('type');
-            $table->decimal('price', 15, 2);
-            $table->enum('status', ['available', 'occupied'])->default('available');
-            $table->timestamps();
+        Schema::table('activities', function (Blueprint $table) {
+            $table->string('ip_address', 45)->nullable()->after('description');
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('units');
+        Schema::table('activities', function (Blueprint $table) {
+            $table->dropColumn('ip_address');
+        });
     }
 };

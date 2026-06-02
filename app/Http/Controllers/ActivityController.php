@@ -9,14 +9,16 @@ class ActivityController extends Controller
 {
     public function index()
     {
-        // Jika yang akses adalah tenant, berikan hanya aktivitas miliknya sendiri
-        if (auth()->user()->role === 'tenant') {
+        $role = auth()->user()->role;
+
+        // Tenant hanya bisa lihat aktivitas miliknya sendiri
+        if ($role === 'tenant') {
             $activities = Activity::with('user')->where('user_id', auth()->id())->latest()->paginate(15);
             return view('activities.index', compact('activities'));
         }
 
-        // Selain tenant dan admin tidak boleh (owner)
-        if (auth()->user()->role !== 'admin') {
+        // Admin dan Owner bisa lihat semua log aktivitas (Anti-Fraud Audit)
+        if (!in_array($role, ['admin', 'owner'])) {
             abort(403, 'Unauthorized action.');
         }
 

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:send-reminders')->daily();
+Schedule::command('app:cleanup-ktp')->daily();

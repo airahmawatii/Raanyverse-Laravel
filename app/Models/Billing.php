@@ -13,6 +13,8 @@ class Billing extends Model
         'tenant_id',
         'unit_id',
         'amount',
+        'admin_fee',
+        'fine_amount',
         'paid_amount',
         'period',
         'due_date',
@@ -20,6 +22,7 @@ class Billing extends Model
         'snap_token',
         'midtrans_order_id',
         'payment_type',
+        'last_reminded_at',
     ];
 
     public function tenant()

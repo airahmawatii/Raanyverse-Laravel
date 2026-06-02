@@ -39,16 +39,23 @@
                                 </span>
                             </div>
                             <p class="text-xs text-stone-500 leading-relaxed mb-3">{{ $activity->description }}</p>
-                            <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
                                 <div class="flex items-center gap-1.5 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                     {{ $activity->user->name ?? 'System' }}
                                 </div>
-                                <div class="w-1 h-1 rounded-full bg-slate-600"></div>
+                                <div class="w-1 h-1 rounded-full bg-slate-300"></div>
                                 <div class="flex items-center gap-1.5 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    {{ $activity->created_at->diffForHumans() }}
+                                    {{ $activity->created_at->format('d M Y, H:i') }}
                                 </div>
+                                @if($activity->ip_address)
+                                <div class="w-1 h-1 rounded-full bg-slate-300"></div>
+                                <div class="flex items-center gap-1.5 text-[10px] font-bold text-[#b75c1c] bg-[rgba(183,92,28,0.08)] px-2 py-0.5 rounded-lg border border-[rgba(183,92,28,0.15)]">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                                    {{ $activity->ip_address }}
+                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -17,7 +17,7 @@ class BillingController extends Controller
         $isProduction = env('DUITKU_ENV') === 'production';
         
         $orderId = 'BILL-' . $billing->id . '-' . time();
-        $amount = (int) $billing->amount;
+        $amount = (int) ($billing->amount + ($billing->admin_fee ?? 0) + ($billing->fine_amount ?? 0));
         $productDetails = "Sewa Properti {$billing->unit->name} ({$billing->period})";
         $email = $billing->tenant->email ?? 'tenant@example.com';
         $customerVaName = $billing->tenant->name ?? 'Tenant';
@@ -84,7 +84,9 @@ class BillingController extends Controller
             'due_date' => 'required|date',
         ]);
 
-        Billing::create($request->all());
+        Billing::create(array_merge($request->only([
+            'tenant_id', 'unit_id', 'amount', 'period', 'due_date'
+        ]), ['admin_fee' => 10000, 'paid_amount' => 0, 'status' => 'unpaid']));
         
         return redirect()->route('billings.index')->with('success', 'Tagihan berhasil dibuat.');
     }
@@ -143,5 +145,28 @@ class BillingController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function downloadReceipt(Billing $billing)
+    {
+        if ($billing->status !== 'paid') {
+            abort(403, 'Hanya tagihan lunas yang dapat diunduh kuitansinya.');
+        }
+
+        // Allow tenant of this billing, or admin, or owner to download the receipt
+        if (auth()->user()->role === 'tenant' && $billing->tenant_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $billing->load(['tenant', 'unit']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billings.receipt', compact('billing'));
+        return $pdf->download('kuitansi-' . $billing->id . '.pdf');
+    }
+
+    public function verifyReceipt(Billing $billing)
+    {
+        $billing->load(['tenant', 'unit']);
+        return view('billings.verify', compact('billing'));
     }
 }

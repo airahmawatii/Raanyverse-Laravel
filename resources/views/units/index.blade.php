@@ -106,7 +106,11 @@
                                 {{-- Harga --}}
                                 <td class="px-8 py-6 whitespace-nowrap">
                                     <div class="text-lg font-bold text-[#3e342f] outfit">Rp {{ number_format($unit->price, 0, ',', '.') }}</div>
-                                    <div class="text-[9px] text-stone-400 font-bold uppercase tracking-widest mt-1">per bulan</div>
+                                    @if(strtolower($unit->property_type ?? '') === 'rumah')
+                                        <div class="text-[9px] text-stone-400 font-bold uppercase tracking-widest mt-1">Harga Beli</div>
+                                    @else
+                                        <div class="text-[9px] text-stone-400 font-bold uppercase tracking-widest mt-1">Harga Sewa / bln</div>
+                                    @endif
                                 </td>
                                 {{-- Status & Penyewa Aktif --}}
                                 <td class="px-8 py-6 whitespace-nowrap">

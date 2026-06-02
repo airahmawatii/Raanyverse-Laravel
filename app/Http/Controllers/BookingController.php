@@ -58,10 +58,11 @@ class BookingController extends Controller
         ]);
 
         Activity::create([
-            'user_id' => auth()->id(),
-            'action' => 'Booking Submitted',
-            'module' => 'booking',
-            'description' => 'Submitted booking request for ' . $booking->unit->name
+            'user_id'    => auth()->id(),
+            'action'     => 'Booking Submitted',
+            'module'     => 'booking',
+            'description'=> 'Submitted booking request for ' . $booking->unit->name,
+            'ip_address' => $request->ip(),
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Permintaan booking berhasil dikirim! Menunggu persetujuan pemilik.');
@@ -94,6 +95,7 @@ class BookingController extends Controller
                 'tenant_id' => $booking->tenant_id,
                 'unit_id' => $booking->unit_id,
                 'amount' => $amount,
+                'admin_fee' => 10000,
                 'paid_amount' => 0,
                 'period' => $startDate->translatedFormat('F Y') . ' - ' . $endDate->translatedFormat('F Y'),
                 'due_date' => \Carbon\Carbon::parse($booking->start_date)->addDays(7)->toDateString(),
@@ -101,17 +103,19 @@ class BookingController extends Controller
             ]);
             
             Activity::create([
-                'user_id' => auth()->id(),
-                'action' => 'Booking Approved',
-                'module' => 'booking',
-                'description' => 'Approved booking & Auto-generated billing for ' . $booking->unit->name . ' (Tenant: ' . $booking->tenant->name . ')'
+                'user_id'    => auth()->id(),
+                'action'     => 'Booking Approved',
+                'module'     => 'booking',
+                'description'=> 'Approved booking & Auto-generated billing for ' . $booking->unit->name . ' (Tenant: ' . $booking->tenant->name . ')',
+                'ip_address' => $request->ip(),
             ]);
         } else {
             Activity::create([
-                'user_id' => auth()->id(),
-                'action' => 'Booking Rejected',
-                'module' => 'booking',
-                'description' => 'Rejected booking for ' . $booking->unit->name
+                'user_id'    => auth()->id(),
+                'action'     => 'Booking Rejected',
+                'module'     => 'booking',
+                'description'=> 'Rejected booking for ' . $booking->unit->name,
+                'ip_address' => $request->ip(),
             ]);
         }
 

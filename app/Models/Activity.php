@@ -14,6 +14,7 @@ class Activity extends Model
         'action',
         'module',
         'description',
+        'ip_address',
     ];
 
     public function user()

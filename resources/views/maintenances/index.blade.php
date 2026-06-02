@@ -56,6 +56,13 @@
                                     <div class="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 group-hover:bg-white group-hover:border-amber-100 transition duration-500 shadow-sm relative overflow-hidden">
                                         <div class="absolute top-0 left-0 w-1 h-full bg-orange-500/20"></div>
                                         <p class="text-sm text-slate-600 leading-relaxed font-bold italic tracking-tight">"{{ $maintenance->description }}"</p>
+                                        @if($maintenance->image_url)
+                                        <div class="mt-3">
+                                            <a href="{{ $maintenance->image_url }}" target="_blank" class="inline-block rounded-lg overflow-hidden border border-slate-200 shadow-sm hover:opacity-80 transition-opacity">
+                                                <img src="{{ $maintenance->image_url }}" alt="Bukti Pemeliharaan" class="w-20 h-20 object-cover">
+                                            </a>
+                                        </div>
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="px-10 py-8 whitespace-nowrap">

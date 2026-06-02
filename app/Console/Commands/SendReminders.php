@@ -53,6 +53,36 @@ class SendReminders extends Command
             $this->info("Notified billing #{$bill->id}");
         }
 
+        // 3. Contract Expiration Alerts (30 days and 7 days before end_date)
+        $expiringRentals = \App\Models\Rental::with(['tenant', 'unit'])
+            ->where(function ($query) {
+                $query->where('end_date', now()->addDays(30)->toDateString())
+                      ->orWhere('end_date', now()->addDays(7)->toDateString());
+            })
+            ->get();
+
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        $contractAlertCount = 0;
+
+        foreach ($expiringRentals as $rental) {
+            $endDate = \Carbon\Carbon::parse($rental->end_date);
+            $daysLeft = now()->diffInDays($endDate);
+            $tenantName = $rental->tenant->name ?? 'Unknown Tenant';
+            $unitName = $rental->unit->name ?? 'Unknown Unit';
+            $formattedEndDate = $endDate->format('d F Y');
+
+            $message = "Kontrak sewa {$tenantName} untuk unit {$unitName} akan berakhir pada {$formattedEndDate} ({$daysLeft} hari lagi). Segera proses perpanjangan atau penyelesaian sewa.";
+
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\BookingReminder($message, 'contract_expiry'));
+            }
+
+            $this->info("Contract expiry alert sent for rental #{$rental->id} ({$tenantName} - {$unitName}, {$daysLeft} days left).");
+            $contractAlertCount++;
+        }
+
+        $this->info("Sent {$contractAlertCount} contract expiry alert(s) to " . $admins->count() . " admin(s).");
+
         $this->info('Reminder check complete.');
     }
 }

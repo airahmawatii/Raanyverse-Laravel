@@ -7,7 +7,7 @@
             @if($role === 'admin')
             <div class="mb-8">
                 <h2 class="text-[#3e342f] text-3xl font-bold playfair mb-2">Dashboard <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#b75c1c] to-[#a65319]">Enterprise</span></h2>
-                <p class="text-stone-500 text-sm font-semibold">Ringkasan Operasional Properti & Kawasan</p>
+                <p class="text-stone-500 text-sm font-semibold">Ringkasan Operasional Properti &amp; Kawasan</p>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
@@ -42,6 +42,41 @@
                 <div class="p-8 rounded-[2rem] bg-amber-50 border border-amber-100 shadow-sm">
                     <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Laba Bersih (Net Profit)</p>
                     <p class="outfit text-3xl font-bold text-[#3e342f] tracking-tighter">Rp {{ number_format($netProfit, 0, ',', '.') }}</p>
+                </div>
+            </div>
+
+            {{-- 📊 GRAFIK ADMIN --}}
+            <div class="grid lg:grid-cols-3 gap-8 mb-8">
+                {{-- Cash Flow Chart --}}
+                <div class="lg:col-span-2 p-8 rounded-[2rem] bg-white border border-[rgba(183,92,28,0.1)] shadow-[0_4px_20px_rgba(62,52,47,0.03)]">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="playfair text-xl font-bold text-[#3e342f]">Arus Kas 6 Bulan Terakhir</h3>
+                            <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Pemasukan vs Pengeluaran</p>
+                        </div>
+                        <div class="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1.5 text-emerald-600"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>Pemasukan</span>
+                            <span class="flex items-center gap-1.5 text-rose-600"><span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>Pengeluaran</span>
+                        </div>
+                    </div>
+                    <canvas id="cashFlowChart" height="120"></canvas>
+                </div>
+
+                {{-- Occupation Doughnut --}}
+                <div class="p-8 rounded-[2rem] bg-white border border-[rgba(183,92,28,0.1)] shadow-[0_4px_20px_rgba(62,52,47,0.03)]">
+                    <h3 class="playfair text-xl font-bold text-[#3e342f] mb-2">Keterisian Unit</h3>
+                    <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-6">Occupation Rate</p>
+                    <div class="relative flex items-center justify-center mb-4">
+                        <canvas id="occupationChart" width="200" height="200"></canvas>
+                        <div class="absolute text-center">
+                            <p class="outfit text-4xl font-black text-[#3e342f]">{{ $occupationRate }}%</p>
+                            <p class="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Terisi</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-6 text-[10px] font-bold uppercase tracking-widest mt-2">
+                        <span class="flex items-center gap-1.5 text-[#b75c1c]"><span class="w-3 h-3 rounded-full bg-[#b75c1c] inline-block"></span>Terisi ({{ $occupiedUnits }})</span>
+                        <span class="flex items-center gap-1.5 text-stone-400"><span class="w-3 h-3 rounded-full bg-stone-200 inline-block"></span>Kosong ({{ $availableUnits }})</span>
+                    </div>
                 </div>
             </div>
 
@@ -85,6 +120,12 @@
                             <p class="text-[9px] font-bold text-stone-400 uppercase tracking-widest text-right">{{ $financialProgress }}% Tuntas</p>
                         </div>
                     </div>
+                    {{-- Predictive Revenue --}}
+                    <div class="p-8 rounded-[2rem] bg-gradient-to-br from-[#b75c1c] to-[#a65319] shadow-[0_8px_30px_rgba(183,92,28,0.3)]">
+                        <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2">Estimasi Bulan Depan</p>
+                        <h4 class="outfit text-2xl font-black text-white tracking-tight mb-1">Rp {{ number_format($predictiveRevenue, 0, ',', '.') }}</h4>
+                        <p class="text-[10px] font-bold text-white/60 uppercase tracking-widest">Berdasarkan {{ $occupiedUnits }} unit aktif</p>
+                    </div>
                 </div>
             </div>
             @endif
@@ -94,40 +135,78 @@
             <!-- Header Profil -->
             <div class="mb-8">
                 <h2 class="text-[#3e342f] text-3xl font-bold playfair mb-2">Laporan Finansial <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#b75c1c] to-[#a65319]">Investor</span></h2>
-                <p class="text-stone-500 text-sm font-semibold">Ringkasan Laba Rugi (P&L) Keseluruhan Kawasan</p>
+                <p class="text-stone-500 text-sm font-semibold">Ringkasan Laba Rugi (P&amp;L) Keseluruhan Kawasan</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
                 <div class="rounded-[2rem] p-8 bg-emerald-50 border border-emerald-100 shadow-sm relative overflow-hidden group">
                     <div class="absolute -right-6 -top-6 text-emerald-500/10 group-hover:scale-110 transition-transform duration-500">
                         <svg class="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-2">Total Pendapatan (Revenue)</p>
-                        <h3 class="text-4xl font-bold text-[#3e342f] outfit mb-2">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</h3>
-                        <p class="text-sm font-semibold text-emerald-600">Dari {{ $paidBillingsCount }} Tagihan Lunas</p>
+                        <p class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-2">Total Pendapatan</p>
+                        <h3 class="text-3xl font-bold text-[#3e342f] outfit mb-2">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</h3>
+                        <p class="text-sm font-semibold text-emerald-600">{{ $paidBillingsCount }} Tagihan Lunas</p>
                     </div>
                 </div>
-
                 <div class="rounded-[2rem] p-8 bg-rose-50 border border-rose-100 shadow-sm relative overflow-hidden group">
                     <div class="absolute -right-6 -top-6 text-rose-500/10 group-hover:scale-110 transition-transform duration-500">
                         <svg class="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Total Pengeluaran (Expense)</p>
-                        <h3 class="text-4xl font-bold text-[#3e342f] outfit mb-2">Rp {{ number_format($totalExpense, 0, ',', '.') }}</h3>
-                        <p class="text-sm font-semibold text-rose-600">Operasional & Gaji</p>
+                        <p class="text-xs font-bold uppercase tracking-widest text-rose-600 mb-2">Total Pengeluaran</p>
+                        <h3 class="text-3xl font-bold text-[#3e342f] outfit mb-2">Rp {{ number_format($totalExpense, 0, ',', '.') }}</h3>
+                        <p class="text-sm font-semibold text-rose-600">Operasional &amp; Gaji</p>
                     </div>
                 </div>
-
                 <div class="rounded-[2rem] p-8 bg-amber-50 border border-amber-100 shadow-sm relative overflow-hidden group">
                     <div class="absolute -right-6 -top-6 text-amber-500/10 group-hover:scale-110 transition-transform duration-500">
                         <svg class="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-xs font-bold uppercase tracking-widest text-amber-600 mb-2">Laba Bersih (Net Profit)</p>
-                        <h3 class="text-4xl font-bold text-[#3e342f] outfit mb-2">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
-                        <p class="text-sm font-semibold text-amber-600">Margin Finansial Keseluruhan</p>
+                        <p class="text-xs font-bold uppercase tracking-widest text-amber-600 mb-2">Laba Bersih</p>
+                        <h3 class="text-3xl font-bold text-[#3e342f] outfit mb-2">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
+                        <p class="text-sm font-semibold text-amber-600">Margin Keseluruhan</p>
+                    </div>
+                </div>
+                <div class="rounded-[2rem] p-8 bg-gradient-to-br from-[#b75c1c] to-[#a65319] shadow-[0_8px_30px_rgba(183,92,28,0.3)] relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <p class="text-xs font-bold uppercase tracking-widest text-white/70 mb-2">Estimasi Bln Depan</p>
+                        <h3 class="text-3xl font-bold text-white outfit mb-2">Rp {{ number_format($predictiveRevenue, 0, ',', '.') }}</h3>
+                        <p class="text-sm font-semibold text-white/70">{{ $occupiedUnits }} Unit Aktif</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 📊 GRAFIK OWNER --}}
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 p-8 rounded-[2rem] bg-white border border-[rgba(183,92,28,0.1)] shadow-[0_4px_20px_rgba(62,52,47,0.03)]">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="playfair text-xl font-bold text-[#3e342f]">Tren Arus Kas 6 Bulan</h3>
+                            <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Revenue vs Expense</p>
+                        </div>
+                        <div class="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
+                            <span class="flex items-center gap-1.5 text-emerald-600"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>Revenue</span>
+                            <span class="flex items-center gap-1.5 text-rose-600"><span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>Expense</span>
+                        </div>
+                    </div>
+                    <canvas id="ownerCashFlowChart" height="120"></canvas>
+                </div>
+
+                <div class="p-8 rounded-[2rem] bg-white border border-[rgba(183,92,28,0.1)] shadow-[0_4px_20px_rgba(62,52,47,0.03)]">
+                    <h3 class="playfair text-xl font-bold text-[#3e342f] mb-2">Keterisian Properti</h3>
+                    <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-6">Occupation Rate</p>
+                    <div class="relative flex items-center justify-center mb-4">
+                        <canvas id="ownerOccupationChart" width="200" height="200"></canvas>
+                        <div class="absolute text-center">
+                            <p class="outfit text-4xl font-black text-[#3e342f]">{{ $occupationRate }}%</p>
+                            <p class="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Terisi</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-6 text-[10px] font-bold uppercase tracking-widest mt-2">
+                        <span class="flex items-center gap-1.5 text-[#b75c1c]"><span class="w-3 h-3 rounded-full bg-[#b75c1c] inline-block"></span>Terisi ({{ $occupiedUnits }})</span>
+                        <span class="flex items-center gap-1.5 text-stone-400"><span class="w-3 h-3 rounded-full bg-stone-200 inline-block"></span>Kosong ({{ $availableUnits }})</span>
                     </div>
                 </div>
             </div>
@@ -135,7 +214,7 @@
 
             {{-- 3. TENANT VIEW --}}
             @if($role === 'tenant')
-            
+
             @if($myUnpaidBillings->count() > 0)
             <div class="p-6 rounded-[2rem] bg-rose-50 border border-rose-200 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
                 <div class="flex items-center gap-4">
@@ -198,6 +277,98 @@
 
         </div>
     </div>
+
+    {{-- Chart.js CDN --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    @if($role === 'admin' || $role === 'owner')
+    <script>
+        const chartLabels  = @json($chartLabels);
+        const chartIncome  = @json($chartIncome);
+        const chartExpense = @json($chartExpense);
+
+        const cashFlowConfig = {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: chartIncome,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 4,
+                        tension: 0.4,
+                        fill: true,
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: chartExpense,
+                        borderColor: '#fb7185',
+                        backgroundColor: 'rgba(251,113,133,0.08)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#fb7185',
+                        pointRadius: 4,
+                        tension: 0.4,
+                        fill: true,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => 'Rp ' + ctx.parsed.y.toLocaleString('id-ID')
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'jt',
+                            font: { size: 10 },
+                            color: '#a8a29e'
+                        },
+                        grid: { color: 'rgba(0,0,0,0.04)' }
+                    },
+                    x: {
+                        ticks: { font: { size: 10 }, color: '#a8a29e' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        };
+
+        const occupationConfig = {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [{{ $occupiedUnits }}, {{ $availableUnits }}],
+                    backgroundColor: ['#b75c1c', '#e7e5e4'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                cutout: '72%',
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        };
+
+        @if($role === 'admin')
+        new Chart(document.getElementById('cashFlowChart'), cashFlowConfig);
+        new Chart(document.getElementById('occupationChart'), occupationConfig);
+        @else
+        new Chart(document.getElementById('ownerCashFlowChart'), cashFlowConfig);
+        new Chart(document.getElementById('ownerOccupationChart'), occupationConfig);
+        @endif
+    </script>
+    @endif
 
     <style>
         .outfit { font-family: 'Outfit', sans-serif; }

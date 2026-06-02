@@ -13,6 +13,7 @@ class Complaint extends Model
         'tenant_id',
         'unit_id',
         'description',
+        'image_url',
         'status'
     ];
 

@@ -7,11 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\Unit;
 use App\Models\Booking;
 use App\Models\Billing;
-use App\Models\Tenant;
-
 use App\Models\Complaint;
 use App\Models\Maintenance;
 use App\Models\Activity;
+use App\Models\Facility;
+use App\Models\FacilityBooking;
+use App\Models\Announcement;
 use App\Services\CalendarSyncService;
 use App\Notifications\BookingReminder;
 
@@ -24,48 +25,59 @@ class TenantController extends Controller
         $this->calendarService = $calendarService;
     }
 
-    private function logActivity($userId, $action, $module, $desc) {
+    private function logActivity(Request $request, $userId, $action, $module, $desc)
+    {
         Activity::create([
-            'user_id' => $userId,
-            'action' => $action,
-            'module' => $module,
-            'description' => $desc
+            'user_id'    => $userId,
+            'action'     => $action,
+            'module'     => $module,
+            'description'=> $desc,
+            'ip_address' => $request->ip(),
         ]);
     }
 
+    // =====================================================================
+    // UNITS
+    // =====================================================================
+
     public function getUnits()
     {
-        return response()->json(Unit::with('estate.region')->get());
+        return response()->json(Unit::with('estate.region')->where('status', 'available')->get());
     }
 
     public function getUnitDetail($id)
     {
-        $unit = Unit::findOrFail($id);
+        $unit = Unit::with('estate.region')->findOrFail($id);
         return response()->json($unit);
     }
 
+    // =====================================================================
+    // BOOKINGS
+    // =====================================================================
+
     public function getBookings(Request $request)
     {
-        $bookings = Booking::with('unit')->where('tenant_id', $request->user()->id)->orderBy('created_at', 'desc')->get();
+        $bookings = Booking::with('unit.estate')
+            ->where('tenant_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($bookings);
     }
 
     public function createBooking(Request $request)
     {
         $request->validate([
-            'unit_id' => 'required|exists:units,id',
+            'unit_id'    => 'required|exists:units,id',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'ktp' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // maksimal 2MB
+            'end_date'   => 'required|date|after:start_date',
+            'ktp'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Check if unit is available
         $unit = Unit::find($request->unit_id);
         if ($unit->status !== 'available') {
             return response()->json(['message' => 'Unit is not available for booking'], 400);
         }
 
-        // Check overlapping bookings
         $overlap = Booking::where('unit_id', $request->unit_id)
             ->whereIn('status', ['pending', 'approved'])
             ->where(function ($q) use ($request) {
@@ -81,50 +93,71 @@ class TenantController extends Controller
             return response()->json(['message' => 'Unit is already booked for these dates'], 400);
         }
 
-        // Upload KTP
         $ktpUrl = null;
         if ($request->hasFile('ktp')) {
             try {
                 $response = cloudinary()->uploadApi()->upload(
                     $request->file('ktp')->getRealPath(),
-                    [
-                        'folder' => 'ktps',
-                    ]
+                    ['folder' => 'ktps']
                 );
                 $ktpUrl = $response['secure_url'];
             } catch (\Exception $e) {
-                // Fallback ke penyimpanan lokal jika Cloudinary gagal
-                $path = $request->file('ktp')->store('public/ktps');
+                $path   = $request->file('ktp')->store('public/ktps');
                 $ktpUrl = asset(\Illuminate\Support\Facades\Storage::url($path));
             }
         }
 
         $booking = Booking::create([
-            'tenant_id' => $request->user()->id,
-            'unit_id' => $request->unit_id,
+            'tenant_id'  => $request->user()->id,
+            'unit_id'    => $request->unit_id,
             'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'ktp_url' => $ktpUrl,
-            'status' => 'pending' // default
+            'end_date'   => $request->end_date,
+            'ktp_url'    => $ktpUrl,
+            'status'     => 'pending',
         ]);
 
-        $this->logActivity($request->user()->id, 'Booking Created', 'booking', 'Requested booking for ' . $unit->name . ' with KTP.');
+        $this->logActivity($request, $request->user()->id, 'Booking Created', 'booking',
+            'Requested booking for ' . $unit->name . ' with KTP.');
 
-        return response()->json(['message' => 'Booking created successfully', 'data' => $booking]);
+        return response()->json(['message' => 'Booking created successfully', 'data' => $booking], 201);
     }
+
+    public function cancelBooking(Request $request, $id)
+    {
+        $booking = Booking::where('id', $id)
+            ->where('tenant_id', $request->user()->id)
+            ->firstOrFail();
+
+        if ($booking->status !== 'pending') {
+            return response()->json(['message' => 'Only pending bookings can be cancelled'], 400);
+        }
+
+        $booking->update(['status' => 'rejected']);
+
+        $this->logActivity($request, $request->user()->id, 'Booking Cancelled', 'booking',
+            'Cancelled booking #' . $booking->id . ' for unit ' . ($booking->unit->name ?? $booking->unit_id));
+
+        return response()->json(['message' => 'Booking cancelled successfully']);
+    }
+
+    // =====================================================================
+    // BILLINGS & PAYMENT
+    // =====================================================================
 
     public function getBillings(Request $request)
     {
         \Illuminate\Support\Facades\Log::info('Billings Requested for Tenant ID: ' . $request->user()->id);
-        $billings = Billing::with('unit')->where('tenant_id', $request->user()->id)->orderBy('created_at', 'desc')->get();
+        $billings = Billing::with('unit')
+            ->where('tenant_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($billings);
     }
 
     public function payBilling(Request $request, $id)
     {
         $billing = Billing::with('unit', 'tenant')->findOrFail($id);
-        
-        // Ensure the billing belongs to the authenticated tenant
+
         if ($billing->tenant_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized access to billing'], 403);
         }
@@ -133,144 +166,354 @@ class TenantController extends Controller
             return response()->json(['message' => 'Billing already paid'], 400);
         }
 
-        $type = $request->input('type', 'full'); // dp, full, balance
+        $type        = $request->input('type', 'full');
+        $amountToPay = $billing->amount + ($billing->fine_amount ?? 0);
 
-        $amountToPay = $billing->amount;
         if ($type === 'dp') {
-            $amountToPay = $billing->amount * 0.3;
+            $amountToPay = ($billing->amount * 0.3) + ($billing->fine_amount ?? 0);
         } elseif ($type === 'balance') {
-            $amountToPay = $billing->amount - $billing->paid_amount;
+            $amountToPay = ($billing->amount - $billing->paid_amount);
         }
 
-        $merchantCode = env('DUITKU_MERCHANT_CODE');
-        $apiKey = env('DUITKU_API_KEY');
-        $isProduction = env('DUITKU_ENV') === 'production';
-        
-        $orderId = 'BILL-' . $billing->id . '-' . time();
-        $amount = (int) $amountToPay;
+        $merchantCode   = env('DUITKU_MERCHANT_CODE');
+        $apiKey         = env('DUITKU_API_KEY');
+        $isProduction   = env('DUITKU_ENV') === 'production';
+        $orderId        = 'BILL-' . $billing->id . '-' . time();
+        $amount         = (int) $amountToPay;
         $productDetails = "Payment for {$billing->unit->name} ({$billing->period}) - " . strtoupper($type);
-        $email = $billing->tenant->email ?? 'tenant@example.com';
+        $email          = $billing->tenant->email ?? 'tenant@example.com';
         $customerVaName = $billing->tenant->name ?? 'Tenant';
-        
-        $callbackUrl = url('/api/payments/notification');
-        $returnUrl = url('/dashboard');
-        $signature = md5($merchantCode . $orderId . $amount . $apiKey);
+        $callbackUrl    = url('/api/payments/notification');
+        $returnUrl      = url('/dashboard');
+        $signature      = md5($merchantCode . $orderId . $amount . $apiKey);
 
-        $params = array(
-            'merchantCode' => $merchantCode,
-            'paymentAmount' => $amount,
+        $params = [
+            'merchantCode'    => $merchantCode,
+            'paymentAmount'   => $amount,
             'merchantOrderId' => $orderId,
-            'productDetails' => $productDetails,
-            'email' => $email,
-            'customerVaName' => $customerVaName,
-            'callbackUrl' => $callbackUrl,
-            'returnUrl' => $returnUrl,
-            'signature' => $signature,
-            'expiryPeriod' => 1440
-        );
+            'productDetails'  => $productDetails,
+            'email'           => $email,
+            'customerVaName'  => $customerVaName,
+            'callbackUrl'     => $callbackUrl,
+            'returnUrl'       => $returnUrl,
+            'signature'       => $signature,
+            'expiryPeriod'    => 1440,
+        ];
 
-        $url = $isProduction 
-            ? 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry' 
+        $url = $isProduction
+            ? 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry'
             : 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry';
 
         try {
             $response = \Illuminate\Support\Facades\Http::post($url, $params);
-            $res = $response->json();
-            
+            $res      = $response->json();
+
             if (isset($res['statusCode']) && $res['statusCode'] == '00') {
                 return response()->json([
-                    'success' => true,
+                    'success'     => true,
                     'payment_url' => $res['paymentUrl'],
-                    'order_id' => $orderId
+                    'order_id'    => $orderId,
                 ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => $res['statusMessage'] ?? 'Failed to generate Duitku payment url'
-                ], 400);
             }
-        } catch (\Exception $e) {
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+                'message' => $res['statusMessage'] ?? 'Failed to generate Duitku payment url',
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
+    // =====================================================================
+    // COMPLAINTS
+    // =====================================================================
+
     public function getComplaints(Request $request)
     {
-        $complaints = Complaint::with('unit')->where('tenant_id', $request->user()->id)->orderBy('created_at', 'desc')->get();
+        $complaints = Complaint::with('unit')
+            ->where('tenant_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($complaints);
     }
 
     public function createComplaint(Request $request)
     {
         $request->validate([
-            'unit_id' => 'required|exists:units,id',
+            'unit_id'     => 'required|exists:units,id',
             'description' => 'required|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
+
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            try {
+                $response = cloudinary()->uploadApi()->upload(
+                    $request->file('image')->getRealPath(),
+                    ['folder' => 'complaints']
+                );
+                $imageUrl = $response['secure_url'];
+            } catch (\Exception $e) {
+                $path     = $request->file('image')->store('public/complaints');
+                $imageUrl = asset(\Illuminate\Support\Facades\Storage::url($path));
+            }
+        }
 
         $complaint = Complaint::create([
-            'tenant_id' => $request->user()->id,
-            'unit_id' => $request->unit_id,
+            'tenant_id'   => $request->user()->id,
+            'unit_id'     => $request->unit_id,
             'description' => $request->description,
-            'status' => 'pending'
+            'image_url'   => $imageUrl,
+            'status'      => 'pending',
         ]);
 
-        $this->logActivity($request->user()->id, 'Complaint Created', 'complaint', 'Created complaint for Unit ' . $request->unit_id);
+        $this->logActivity($request, $request->user()->id, 'Complaint Created', 'complaint',
+            'Created complaint for Unit ' . $request->unit_id);
 
-        return response()->json(['message' => 'Complaint submitted successfully', 'data' => $complaint]);
+        return response()->json(['message' => 'Complaint submitted successfully', 'data' => $complaint], 201);
     }
+
+    // =====================================================================
+    // MAINTENANCES
+    // =====================================================================
 
     public function getMaintenances(Request $request)
     {
-        $maintenances = Maintenance::with('unit')->where('tenant_id', $request->user()->id)->orderBy('created_at', 'desc')->get();
+        $maintenances = Maintenance::with('unit')
+            ->where('tenant_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($maintenances);
     }
 
     public function createMaintenance(Request $request)
     {
         $request->validate([
-            'unit_id' => 'required|exists:units,id',
+            'unit_id'     => 'required|exists:units,id',
             'description' => 'required|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
+
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            try {
+                $response = cloudinary()->uploadApi()->upload(
+                    $request->file('image')->getRealPath(),
+                    ['folder' => 'maintenances']
+                );
+                $imageUrl = $response['secure_url'];
+            } catch (\Exception $e) {
+                $path     = $request->file('image')->store('public/maintenances');
+                $imageUrl = asset(\Illuminate\Support\Facades\Storage::url($path));
+            }
+        }
 
         $maintenance = Maintenance::create([
-            'tenant_id' => $request->user()->id,
-            'unit_id' => $request->unit_id,
+            'tenant_id'   => $request->user()->id,
+            'unit_id'     => $request->unit_id,
             'description' => $request->description,
-            'status' => 'pending'
+            'image_url'   => $imageUrl,
+            'status'      => 'pending',
         ]);
 
-        $this->logActivity($request->user()->id, 'Maintenance Request Created', 'maintenance', 'Requested maintenance for Unit ' . $request->unit_id);
+        $this->logActivity($request, $request->user()->id, 'Maintenance Request Created', 'maintenance',
+            'Requested maintenance for Unit ' . $request->unit_id);
 
-        return response()->json(['message' => 'Maintenance request submitted successfully', 'data' => $maintenance]);
+        return response()->json(['message' => 'Maintenance request submitted successfully', 'data' => $maintenance], 201);
     }
+
+    // =====================================================================
+    // FACILITIES
+    // =====================================================================
+
+    public function getFacilities(Request $request)
+    {
+        $facilities = Facility::with('estate')
+            ->where('is_bookable', true)
+            ->get()
+            ->map(function ($f) {
+                return [
+                    'id'           => $f->id,
+                    'name'         => $f->name,
+                    'description'  => $f->description,
+                    'estate'       => $f->estate ? ['id' => $f->estate->id, 'name' => $f->estate->name] : null,
+                    'open_time'    => $f->open_time,
+                    'close_time'   => $f->close_time,
+                    'max_capacity' => $f->max_capacity,
+                    'booking_fee'  => $f->booking_fee,
+                ];
+            });
+
+        return response()->json($facilities);
+    }
+
+    public function bookFacility(Request $request, $id)
+    {
+        $facility = Facility::findOrFail($id);
+
+        if (!$facility->is_bookable) {
+            return response()->json(['message' => 'This facility is not available for booking'], 400);
+        }
+
+        $request->validate([
+            'booking_date' => 'required|date|after_or_equal:today',
+            'start_time'   => 'required|date_format:H:i',
+            'end_time'     => 'required|date_format:H:i|after:start_time',
+            'guest_count'  => 'required|integer|min:1|max:' . $facility->max_capacity,
+        ]);
+
+        // Check capacity conflict on same date & overlapping time
+        $conflict = FacilityBooking::where('facility_id', $id)
+            ->where('booking_date', $request->booking_date)
+            ->whereIn('status', ['pending', 'approved'])
+            ->where(function ($q) use ($request) {
+                $q->where(function ($q2) use ($request) {
+                    $q2->where('start_time', '<', $request->end_time)
+                       ->where('end_time', '>', $request->start_time);
+                });
+            })
+            ->sum('guest_count');
+
+        if (($conflict + $request->guest_count) > $facility->max_capacity) {
+            return response()->json(['message' => 'Facility is fully booked for the selected time slot'], 400);
+        }
+
+        $facilityBooking = FacilityBooking::create([
+            'facility_id'  => $facility->id,
+            'tenant_id'    => $request->user()->id,
+            'booking_date' => $request->booking_date,
+            'start_time'   => $request->start_time,
+            'end_time'     => $request->end_time,
+            'guest_count'  => $request->guest_count,
+            'status'       => 'pending',
+        ]);
+
+        $this->logActivity($request, $request->user()->id, 'Facility Booked', 'facility',
+            'Booked facility ' . $facility->name . ' on ' . $request->booking_date);
+
+        return response()->json([
+            'message' => 'Facility booking submitted successfully',
+            'data'    => $facilityBooking->load('facility'),
+        ], 201);
+    }
+
+    public function getFacilityBookings(Request $request)
+    {
+        $bookings = FacilityBooking::with('facility.estate')
+            ->where('tenant_id', $request->user()->id)
+            ->orderBy('booking_date', 'desc')
+            ->get();
+        return response()->json($bookings);
+    }
+
+    public function cancelFacilityBooking(Request $request, $id)
+    {
+        $booking = FacilityBooking::where('id', $id)
+            ->where('tenant_id', $request->user()->id)
+            ->firstOrFail();
+
+        if (!in_array($booking->status, ['pending', 'approved'])) {
+            return response()->json(['message' => 'This booking cannot be cancelled'], 400);
+        }
+
+        $booking->update(['status' => 'cancelled']);
+
+        $this->logActivity($request, $request->user()->id, 'Facility Booking Cancelled', 'facility',
+            'Cancelled facility booking #' . $booking->id);
+
+        return response()->json(['message' => 'Facility booking cancelled successfully']);
+    }
+
+    // =====================================================================
+    // ANNOUNCEMENTS
+    // =====================================================================
+
+    public function getAnnouncements(Request $request)
+    {
+        // Get tenant's estate via their active rental or booking
+        $tenantEstateId = \App\Models\Rental::where('tenant_id', $request->user()->id)
+            ->join('units', 'rentals.unit_id', '=', 'units.id')
+            ->value('units.estate_id');
+
+        $announcements = Announcement::with('estate')
+            ->where('is_active', true)
+            ->where(function ($q) use ($tenantEstateId) {
+                // Global announcements (no specific estate) OR tenant's estate
+                $q->whereNull('estate_id');
+                if ($tenantEstateId) {
+                    $q->orWhere('estate_id', $tenantEstateId);
+                }
+            })
+            ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($a) {
+                return [
+                    'id'         => $a->id,
+                    'title'      => $a->title,
+                    'content'    => $a->content,
+                    'priority'   => $a->priority,
+                    'estate'     => $a->estate ? ['id' => $a->estate->id, 'name' => $a->estate->name] : null,
+                    'is_global'  => is_null($a->estate_id),
+                    'created_at' => $a->created_at->toDateTimeString(),
+                ];
+            });
+
+        return response()->json($announcements);
+    }
+
+    // =====================================================================
+    // HISTORY & NOTIFICATIONS
+    // =====================================================================
 
     public function getHistory(Request $request)
     {
-        $activities = Activity::where('user_id', $request->user()->id)->orderBy('created_at', 'desc')->get();
+        $activities = Activity::where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return response()->json($activities);
     }
 
     public function syncCalendar(Request $request, $id)
     {
-        $booking = Booking::with('unit')->where('id', $id)->where('tenant_id', $request->user()->id)->firstOrFail();
-        
+        $booking = Booking::with('unit')
+            ->where('id', $id)
+            ->where('tenant_id', $request->user()->id)
+            ->firstOrFail();
+
         if ($booking->status !== 'approved') {
             return response()->json(['message' => 'Only approved bookings can be synced'], 400);
         }
 
         $result = $this->calendarService->syncBooking($booking);
-        
-        $this->logActivity($request->user()->id, 'Calendar Sync', 'booking', 'Synced booking for ' . $booking->unit->name . ' to Google Calendar');
+
+        $this->logActivity($request, $request->user()->id, 'Calendar Sync', 'booking',
+            'Synced booking for ' . $booking->unit->name . ' to Google Calendar');
 
         return response()->json($result);
     }
 
     public function getNotifications(Request $request)
     {
-        $notifications = $request->user()->notifications;
+        $notifications = $request->user()->notifications()->latest()->get()->map(function ($n) {
+            return [
+                'id'         => $n->id,
+                'type'       => $n->data['type'] ?? 'info',
+                'message'    => $n->data['message'] ?? '',
+                'sent_at'    => $n->data['sent_at'] ?? $n->created_at->toDateTimeString(),
+                'read_at'    => $n->read_at,
+                'is_read'    => !is_null($n->read_at),
+            ];
+        });
+
         return response()->json($notifications);
+    }
+
+    public function markNotificationRead(Request $request, $id)
+    {
+        $notification = $request->user()->notifications()->where('id', $id)->firstOrFail();
+        $notification->markAsRead();
+        return response()->json(['message' => 'Notification marked as read']);
     }
 }

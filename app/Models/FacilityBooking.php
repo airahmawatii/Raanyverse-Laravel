@@ -8,12 +8,12 @@ class FacilityBooking extends Model
 {
     protected $fillable = [
         'facility_id',
-        'booked_by',
+        'tenant_id',
         'booking_date',
         'start_time',
         'end_time',
-        'total_fee',
-        'status'
+        'guest_count',
+        'status',
     ];
 
     public function facility()
@@ -21,8 +21,8 @@ class FacilityBooking extends Model
         return $this->belongsTo(Facility::class);
     }
 
-    public function user()
+    public function tenant()
     {
-        return $this->belongsTo(User::class, 'booked_by');
+        return $this->belongsTo(User::class, 'tenant_id');
     }
 }

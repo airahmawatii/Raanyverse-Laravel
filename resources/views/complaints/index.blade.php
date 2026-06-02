@@ -55,6 +55,13 @@
                                 {{-- Deskripsi --}}
                                 <td class="px-8 py-6" style="min-width:320px;">
                                     <p class="text-sm text-stone-500 leading-relaxed italic">"{{ $complaint->description }}"</p>
+                                    @if($complaint->image_url)
+                                    <div class="mt-2">
+                                        <a href="{{ $complaint->image_url }}" target="_blank" class="inline-block rounded-lg overflow-hidden border border-stone-200 shadow-sm hover:opacity-80 transition-opacity">
+                                            <img src="{{ $complaint->image_url }}" alt="Bukti Kendala" class="w-16 h-16 object-cover">
+                                        </a>
+                                    </div>
+                                    @endif
                                 </td>
                                 {{-- Status --}}
                                 <td class="px-8 py-6 whitespace-nowrap">

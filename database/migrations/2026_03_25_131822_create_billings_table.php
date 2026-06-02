@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
-            $table->decimal('amount', 10, 2);
+            $table->decimal('amount', 15, 2);
             $table->string('period');
             $table->enum('status', ['unpaid', 'paid'])->default('unpaid');
             $table->timestamps();

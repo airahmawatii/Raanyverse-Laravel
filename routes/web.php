@@ -24,19 +24,8 @@ Route::get('/dashboard', function () {
     $role = Auth::user()->role;
     $user = Auth::user();
 
-    // 🔥 AUTOMATIC OVERDUE CHECK
-    \App\Models\Billing::where('status', 'unpaid')
-        ->where('due_date', '<', now()->toDateString())
-        ->update(['status' => 'overdue']);
-
-    // 🔥 AUTOMATIC RENTAL EXPIRY (AUTO-RELEASE)
-    $expiredRentals = \App\Models\Rental::where('end_date', '<', now()->toDateString())->get();
-    foreach($expiredRentals as $rental) {
-        if ($rental->unit) {
-            $rental->unit->update(['status' => 'available']);
-        }
-        $rental->delete(); // Clear active rental to free the unit
-    }
+    // Overdue & rental expiry diproses oleh Artisan command app:process-daily-tasks (scheduled daily)
+    // Tidak dijalankan di sini untuk menghindari N+1 queries dan race condition
 
     $totalUnits = \App\Models\Unit::count();
     $availableUnits = \App\Models\Unit::where('status', 'available')->count();
@@ -57,6 +46,26 @@ Route::get('/dashboard', function () {
     $paidBillingsCount = \App\Models\Billing::where('status', 'paid')->count();
     $totalBillingsCount = \App\Models\Billing::count();
     $financialProgress = $totalBillingsCount > 0 ? round(($paidBillingsCount / $totalBillingsCount) * 100) : 0;
+
+    // 📊 CHART DATA: Cash Flow 6 Bulan Terakhir
+    $chartLabels = [];
+    $chartIncome = [];
+    $chartExpense = [];
+    for ($i = 5; $i >= 0; $i--) {
+        $month = now()->subMonths($i);
+        $chartLabels[] = $month->translatedFormat('M Y');
+        $chartIncome[] = (float) \App\Models\Billing::where('status', 'paid')
+            ->whereYear('updated_at', $month->year)
+            ->whereMonth('updated_at', $month->month)
+            ->sum('amount');
+        $chartExpense[] = (float) \App\Models\Expense::whereYear('expense_date', $month->year)
+            ->whereMonth('expense_date', $month->month)
+            ->sum('amount');
+    }
+
+    // 📊 Occupation Rate & Predictive Revenue
+    $occupationRate = $totalUnits > 0 ? round(($occupiedUnits / $totalUnits) * 100, 1) : 0;
+    $predictiveRevenue = (float) \App\Models\Unit::where('status', 'occupied')->sum('price');
 
     // Data Tenant
     $myRoom = null;
@@ -80,12 +89,16 @@ Route::get('/dashboard', function () {
         'totalBillings', 'totalComplaints', 'totalMaintenances', 'recentActivities',
         'role', 'myRoom', 'myRoomEndDate', 'myBillings', 'myUnpaidBillings', 'myComplaints',
         'totalOwners', 'totalTenants', 'totalRevenue', 'totalExpense', 'netProfit', 'financialProgress',
-        'paidBillingsCount', 'totalBillingsCount'
+        'paidBillingsCount', 'totalBillingsCount',
+        'chartLabels', 'chartIncome', 'chartExpense',
+        'occupationRate', 'predictiveRevenue'
     ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
 // 🔐 SEMUA MASUK SINI
+Route::get('/verify-receipt/{billing}', [\App\Http\Controllers\BillingController::class, 'verifyReceipt'])->name('billings.verify');
+
 Route::middleware('auth')->group(function () {
 
     // bawaan
@@ -101,6 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('bookings', BookingController::class);
     Route::get('/billings/export', [BillingController::class, 'export'])->name('billings.export');
     Route::get('/billings/{billing}/snap', [BillingController::class, 'getSnapToken'])->name('billings.snap');
+    Route::get('/billings/{billing}/receipt', [BillingController::class, 'downloadReceipt'])->name('billings.receipt');
     Route::resource('billings', BillingController::class);
     Route::resource('complaints', ComplaintController::class);
     Route::resource('maintenances', MaintenanceController::class);
@@ -115,8 +129,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('facilities', \App\Http\Controllers\FacilityController::class);
     Route::resource('announcements', \App\Http\Controllers\AnnouncementController::class);
     Route::resource('leads', \App\Http\Controllers\LeadController::class);
-    Route::resource('visitors', \App\Http\Controllers\VisitorController::class);
-    Route::resource('parcels', \App\Http\Controllers\ParcelController::class);
+
+    // 🔥 FACILITY BOOKINGS MANAGEMENT (Admin)
+    Route::get('/facility-bookings', [\App\Http\Controllers\FacilityBookingController::class, 'index'])->name('facility_bookings.index');
+    Route::patch('/facility-bookings/{facilityBooking}/status', [\App\Http\Controllers\FacilityBookingController::class, 'updateStatus'])->name('facility_bookings.updateStatus');
 
     // 🔥 TAMBAHAN KHUSUS COMPLAINT
     Route::get('/complaints/{id}/approve', [ComplaintController::class, 'approve']);

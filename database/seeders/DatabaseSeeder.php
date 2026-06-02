@@ -82,7 +82,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Cluster Mutiara Blok A1',
             'type' => 'Standard',
             'property_type' => 'Rumah',
-            'price' => 1500000, // Monthly
+            'price' => 650000000, // Realistic house price
             'status' => 'occupied'
         ]);
 
@@ -91,7 +91,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Ruko Grand Boulevard B2',
             'type' => 'VIP',
             'property_type' => 'Ruko',
-            'price' => 2500000, // Monthly
+            'price' => 18000000, // Realistic ruko monthly rent
             'status' => 'occupied'
         ]);
 
@@ -100,7 +100,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Cluster Diamond Blok C3',
             'type' => 'Standard',
             'property_type' => 'Rumah',
-            'price' => 1500000, // Monthly
+            'price' => 1250000000, // Realistic premium house price
             'status' => 'available'
         ]);
 
@@ -109,7 +109,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Ruko Premium D4',
             'type' => 'VIP',
             'property_type' => 'Ruko',
-            'price' => 2500000, // Monthly
+            'price' => 18000000, // Realistic ruko monthly rent
             'status' => 'available'
         ]);
 
@@ -141,7 +141,7 @@ class DatabaseSeeder extends Seeder
         Billing::create([
             'tenant_id' => $tenant1->id,
             'unit_id' => $unit1->id,
-            'amount' => 1500000,
+            'amount' => 650000000,
             'period' => Carbon::now()->format('F Y'),
             'status' => 'unpaid'
         ]);
@@ -149,7 +149,7 @@ class DatabaseSeeder extends Seeder
         Billing::create([
             'tenant_id' => $tenant2->id,
             'unit_id' => $unit2->id,
-            'amount' => 2500000,
+            'amount' => 18000000,
             'period' => Carbon::now()->subMonth()->format('F Y'),
             'status' => 'paid'
         ]);
@@ -267,27 +267,6 @@ class DatabaseSeeder extends Seeder
             'status' => 'negotiation',
             'survey_date' => Carbon::now()->subDays(3),
             'notes' => 'Tinggal mencocokkan harga sewa tahunan.'
-        ]);
-
-        // 14. Create Visitors
-        \App\Models\Visitor::create([
-            'name' => 'Andi Wijaya',
-            'phone' => '085211112222',
-            'vehicle_number' => 'B 4123 CD',
-            'unit_id' => $unit1->id,
-            'purpose' => 'Servis AC berkala',
-            'status' => 'inside',
-            'check_in_at' => Carbon::now()->subMinutes(30)
-        ]);
-
-        // 15. Create Parcels
-        \App\Models\Parcel::create([
-            'recipient_name' => 'Ahmad',
-            'unit_id' => $unit1->id,
-            'courier_name' => 'J&T Express',
-            'tracking_number' => 'JT981247192',
-            'status' => 'received',
-            'received_at' => Carbon::now()->subHours(2)
         ]);
 
     }
