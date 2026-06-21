@@ -113,7 +113,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings/{booking}/contract', [BookingController::class, 'contract'])->name('bookings.contract');
     Route::resource('bookings', BookingController::class);
     Route::get('/billings/export', [BillingController::class, 'export'])->name('billings.export');
-    Route::get('/billings/{billing}/snap', [BillingController::class, 'getSnapToken'])->name('billings.snap');
     Route::get('/billings/{billing}/receipt', [BillingController::class, 'downloadReceipt'])->name('billings.receipt');
     Route::resource('billings', BillingController::class);
     Route::resource('complaints', ComplaintController::class);
@@ -139,6 +138,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/complaints/{id}/complete', [ComplaintController::class, 'complete']);
 });
 
+
+// 🔥 GOOGLE OAUTH ROUTES (WEB)
+Route::get('/auth/google/redirect', [\App\Http\Controllers\Api\GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+Route::get('/auth/google/callback', [\App\Http\Controllers\Api\GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
 // JANGAN DIHAPUS
 require __DIR__.'/auth.php';

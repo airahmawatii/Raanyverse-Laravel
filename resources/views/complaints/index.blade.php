@@ -80,7 +80,7 @@
                                 </td>
                                 {{-- Tindakan --}}
                                 <td class="px-8 py-6 whitespace-nowrap text-right">
-                                    @if(auth()->user()->role !== 'tenant')
+                                    @if(auth()->user()->role === 'admin')
                                         @if(!in_array($complaint->status, ['completed', 'rejected']))
                                         <form action="{{ route('complaints.update', $complaint->id) }}" method="POST" class="inline">
                                             @csrf @method('PUT')

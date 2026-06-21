@@ -1,8 +1,7 @@
 *.log
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -27,3 +26,7 @@ Thumbs.db
 *.apk
 *.zip
 *.stackdump
+
+# Debug & local test scripts (JANGAN diupload)
+test_db.php
+fix_theme.py

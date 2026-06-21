@@ -10,7 +10,7 @@
         <div class="max-w-7xl mx-auto space-y-6">
 
             {{-- Form Buat Tagihan --}}
-            @if(auth()->user()->role !== 'tenant')
+            @if(auth()->user()->role === 'admin')
             <div class="rounded-[2rem] overflow-hidden bg-white shadow-sm border border-[rgba(183,92,28,0.1)]">
                 <div class="px-8 py-5 flex items-center gap-3 border-b border-stone-100 bg-[#fdfbf7]">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center text-[#3e342f]" style="background: linear-gradient(135deg, #b75c1c 0%, #a65319 100%);">
@@ -133,7 +133,7 @@
                                 </td>
                                 {{-- Aksi --}}
                                 <td class="px-8 py-6 whitespace-nowrap text-right">
-                                    @if(auth()->user()->role !== 'tenant')
+                                    @if(auth()->user()->role === 'admin')
                                         @if($billing->status === 'unpaid')
                                         <form action="{{ route('billings.update', $billing->id) }}" method="POST" class="inline"
                                               onsubmit="return confirm('Tandai tagihan ini sebagai lunas?');">
@@ -156,9 +156,14 @@
                                         @endif
                                     @else
                                         @if($billing->status === 'unpaid')
-                                        <button type="button" onclick="payWithDuitku({{ $billing->id }})" class="px-5 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 shadow-sm text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100">
-                                            Bayar Sekarang
-                                        </button>
+                                        @php
+                                            $totalAmount = $billing->amount + ($billing->admin_fee ?? 0) + ($billing->platform_fee ?? 0) + ($billing->fine_amount ?? 0);
+                                            $waText = "Halo Admin RaanyVerse Properti,\n\nSaya ingin melakukan konfirmasi pembayaran tagihan dengan detail berikut:\n\n- *Nama*: " . auth()->user()->name . "\n- *Email*: " . auth()->user()->email . "\n- *Unit*: " . ($billing->unit->name ?? '-') . "\n- *Periode*: " . $billing->period . "\n- *Nominal*: Rp " . number_format($totalAmount, 0, ',', '.') . "\n\nMohon bantuannya untuk memproses dan melakukan verifikasi. Terima kasih!";
+                                            $waUrl = "https://wa.me/6289601784887?text=" . urlencode($waText);
+                                        @endphp
+                                        <a href="{{ $waUrl }}" target="_blank" class="px-5 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 shadow-sm text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 inline-block text-center">
+                                            Konfirmasi Pembayaran
+                                        </a>
                                         @else
                                         <div class="flex items-center justify-end gap-2">
                                             <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-50 border border-emerald-100">
@@ -185,33 +190,6 @@
         </div>
     </div>
     
-    <script type="text/javascript">
-        function payWithDuitku(billingId) {
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = 'MEMPROSES...';
-            btn.disabled = true;
 
-            fetch(`/billings/${billingId}/snap`)
-                .then(response => response.json())
-                .then(data => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-
-                    if (data.success && data.payment_url) {
-                        // Redirect directly to Duitku Sandbox / Passport Checkout URL
-                        window.location.href = data.payment_url;
-                    } else {
-                        alert("Gagal memproses pembayaran Duitku: " + (data.message || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    console.error('Error:', error);
-                    alert("Terjadi kesalahan jaringan.");
-                });
-        }
-    </script>
     <style>.outfit { font-family: 'Outfit', sans-serif; } .playfair { font-family: 'Playfair Display', serif; }</style>
 </x-app-layout>

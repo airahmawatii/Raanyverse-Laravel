@@ -53,8 +53,6 @@ class RegisteredUserController extends Controller
             return redirect(route('login'))->with('status', 'Pendaftaran Anda berhasil! Akun Pemilik Properti sedang menunggu persetujuan Admin.');
         }
 
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('login'))->with('status', 'Pendaftaran Anda berhasil! Silakan login untuk masuk.');
     }
 }

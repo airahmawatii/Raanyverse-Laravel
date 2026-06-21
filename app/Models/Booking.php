@@ -15,7 +15,13 @@ class Booking extends Model
         'start_date',
         'end_date',
         'ktp_url',
-        'status'
+        'status',
+        'payment_type',
+        'duration_months',
+        'dp_amount',
+        'due_day',
+        'google_calendar_event_id',
+        'is_synced'
     ];
 
     public function tenant()

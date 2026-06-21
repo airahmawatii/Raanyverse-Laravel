@@ -21,6 +21,13 @@ class Unit extends Model
         'estate_id',
     ];
 
+    protected $appends = ['has_pending_booking'];
+
+    public function getHasPendingBookingAttribute()
+    {
+        return $this->bookings()->where('status', 'pending')->exists();
+    }
+
     public function estate()
     {
         return $this->belongsTo(Estate::class);

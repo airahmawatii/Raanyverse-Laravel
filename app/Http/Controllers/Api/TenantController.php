@@ -42,7 +42,7 @@ class TenantController extends Controller
 
     public function getUnits()
     {
-        return response()->json(Unit::with('estate.region')->where('status', 'available')->get());
+        return response()->json(Unit::with('estate.region')->get());
     }
 
     public function getUnitDetail($id)
@@ -67,15 +67,23 @@ class TenantController extends Controller
     public function createBooking(Request $request)
     {
         $request->validate([
-            'unit_id'    => 'required|exists:units,id',
-            'start_date' => 'required|date',
-            'end_date'   => 'required|date|after:start_date',
-            'ktp'        => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'unit_id'         => 'required|exists:units,id',
+            'start_date'      => 'required|date',
+            'end_date'        => 'required|date|after:start_date',
+            'ktp'             => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'payment_type'    => 'required|in:sewa,cicilan',
+            'duration_months' => 'required|integer|min:1',
+            'dp_amount'       => 'required|numeric|min:0',
+            'due_day'         => 'nullable|integer|between:1,28',
         ]);
 
         $unit = Unit::find($request->unit_id);
-        if ($unit->status !== 'available') {
-            return response()->json(['message' => 'Unit is not available for booking'], 400);
+        if ($unit->status === 'maintenance') {
+            return response()->json(['message' => 'Unit is currently undergoing maintenance and cannot be booked'], 400);
+        }
+
+        if ($unit->has_pending_booking) {
+            return response()->json(['message' => 'Unit tidak bisa dipesan karena ada permintaan sewa/pembelian yang belum di-approve.'], 400);
         }
 
         $overlap = Booking::where('unit_id', $request->unit_id)
@@ -108,12 +116,16 @@ class TenantController extends Controller
         }
 
         $booking = Booking::create([
-            'tenant_id'  => $request->user()->id,
-            'unit_id'    => $request->unit_id,
-            'start_date' => $request->start_date,
-            'end_date'   => $request->end_date,
-            'ktp_url'    => $ktpUrl,
-            'status'     => 'pending',
+            'tenant_id'       => $request->user()->id,
+            'unit_id'         => $request->unit_id,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+            'ktp_url'         => $ktpUrl,
+            'status'          => 'pending',
+            'payment_type'    => $request->payment_type,
+            'duration_months' => $request->duration_months,
+            'dp_amount'       => $request->dp_amount,
+            'due_day'         => $request->due_day,
         ]);
 
         $this->logActivity($request, $request->user()->id, 'Booking Created', 'booking',
@@ -156,73 +168,30 @@ class TenantController extends Controller
 
     public function payBilling(Request $request, $id)
     {
-        $billing = Billing::with('unit', 'tenant')->findOrFail($id);
+        // Fitur pembayaran Duitku telah dihapus.
+        // Konfirmasi pembayaran dilakukan secara manual melalui WhatsApp.
+        return response()->json([
+            'success' => true,
+            'message' => 'Silakan konfirmasi pembayaran secara manual melalui WhatsApp Admin.',
+        ]);
+    }
+
+    public function downloadReceipt(Request $request, $id)
+    {
+        $billing = Billing::findOrFail($id);
+
+        if ($billing->status !== 'paid') {
+            return response()->json(['message' => 'Hanya tagihan lunas yang dapat diunduh kuitansinya.'], 403);
+        }
 
         if ($billing->tenant_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized access to billing'], 403);
+            return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
-        if ($billing->status === 'paid') {
-            return response()->json(['message' => 'Billing already paid'], 400);
-        }
+        $billing->load(['tenant', 'unit']);
 
-        $type        = $request->input('type', 'full');
-        $amountToPay = $billing->amount + ($billing->fine_amount ?? 0);
-
-        if ($type === 'dp') {
-            $amountToPay = ($billing->amount * 0.3) + ($billing->fine_amount ?? 0);
-        } elseif ($type === 'balance') {
-            $amountToPay = ($billing->amount - $billing->paid_amount);
-        }
-
-        $merchantCode   = env('DUITKU_MERCHANT_CODE');
-        $apiKey         = env('DUITKU_API_KEY');
-        $isProduction   = env('DUITKU_ENV') === 'production';
-        $orderId        = 'BILL-' . $billing->id . '-' . time();
-        $amount         = (int) $amountToPay;
-        $productDetails = "Payment for {$billing->unit->name} ({$billing->period}) - " . strtoupper($type);
-        $email          = $billing->tenant->email ?? 'tenant@example.com';
-        $customerVaName = $billing->tenant->name ?? 'Tenant';
-        $callbackUrl    = url('/api/payments/notification');
-        $returnUrl      = url('/dashboard');
-        $signature      = md5($merchantCode . $orderId . $amount . $apiKey);
-
-        $params = [
-            'merchantCode'    => $merchantCode,
-            'paymentAmount'   => $amount,
-            'merchantOrderId' => $orderId,
-            'productDetails'  => $productDetails,
-            'email'           => $email,
-            'customerVaName'  => $customerVaName,
-            'callbackUrl'     => $callbackUrl,
-            'returnUrl'       => $returnUrl,
-            'signature'       => $signature,
-            'expiryPeriod'    => 1440,
-        ];
-
-        $url = $isProduction
-            ? 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry'
-            : 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry';
-
-        try {
-            $response = \Illuminate\Support\Facades\Http::post($url, $params);
-            $res      = $response->json();
-
-            if (isset($res['statusCode']) && $res['statusCode'] == '00') {
-                return response()->json([
-                    'success'     => true,
-                    'payment_url' => $res['paymentUrl'],
-                    'order_id'    => $orderId,
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => $res['statusMessage'] ?? 'Failed to generate Duitku payment url',
-            ], 400);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billings.receipt', compact('billing'));
+        return $pdf->download('kuitansi-' . $billing->id . '.pdf');
     }
 
     // =====================================================================

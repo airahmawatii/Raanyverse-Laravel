@@ -21,12 +21,18 @@ class UnitController extends Controller
 
     public function create()
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $estates = \App\Models\Estate::all();
         return view('units.create', compact('estates'));
     }
 
     public function store(Request $request)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $request->validate([
             'blok' => 'required|string',
             'nomor_unit' => 'required|string',
@@ -55,12 +61,18 @@ class UnitController extends Controller
 
     public function edit(Unit $unit)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $estates = \App\Models\Estate::all();
         return view('units.edit', compact('unit', 'estates'));
     }
 
     public function update(Request $request, Unit $unit)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $request->validate([
             'blok' => 'required|string',
             'nomor_unit' => 'required|string',
@@ -102,6 +114,9 @@ class UnitController extends Controller
 
     public function destroy(Unit $unit)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         // Check if there are active bookings or rentals, then decide to delete or not
         if ($unit->image && str_contains($unit->image, 'res.cloudinary.com')) {
             $path = parse_url($unit->image, PHP_URL_PATH);

@@ -10,62 +10,7 @@ use Illuminate\Http\Request;
 
 class BillingController extends Controller
 {
-    public function getSnapToken(Billing $billing)
-    {
-        $merchantCode = env('DUITKU_MERCHANT_CODE');
-        $apiKey = env('DUITKU_API_KEY');
-        $isProduction = env('DUITKU_ENV') === 'production';
-        
-        $orderId = 'BILL-' . $billing->id . '-' . time();
-        $amount = (int) ($billing->amount + ($billing->admin_fee ?? 0) + ($billing->fine_amount ?? 0));
-        $productDetails = "Sewa Properti {$billing->unit->name} ({$billing->period})";
-        $email = $billing->tenant->email ?? 'tenant@example.com';
-        $customerVaName = $billing->tenant->name ?? 'Tenant';
-        
-        $callbackUrl = url('/api/payments/notification');
-        $returnUrl = url('/dashboard');
-        $signature = md5($merchantCode . $orderId . $amount . $apiKey);
 
-        $params = array(
-            'merchantCode' => $merchantCode,
-            'paymentAmount' => $amount,
-            'merchantOrderId' => $orderId,
-            'productDetails' => $productDetails,
-            'email' => $email,
-            'customerVaName' => $customerVaName,
-            'callbackUrl' => $callbackUrl,
-            'returnUrl' => $returnUrl,
-            'signature' => $signature,
-            'expiryPeriod' => 1440
-        );
-
-        $url = $isProduction 
-            ? 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry' 
-            : 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry';
-
-        try {
-            $response = \Illuminate\Support\Facades\Http::post($url, $params);
-            $res = $response->json();
-            
-            if (isset($res['statusCode']) && $res['statusCode'] == '00') {
-                $billing->update(['snap_token' => $res['paymentUrl']]); // Reusing column name for backwards compatibility
-                return response()->json([
-                    'success' => true,
-                    'payment_url' => $res['paymentUrl'],
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => $res['statusMessage'] ?? 'Failed to generate Duitku url'
-                ], 400);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
     public function index()
     {
         $billings = Billing::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->get();
@@ -76,6 +21,9 @@ class BillingController extends Controller
 
     public function store(Request $request)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $request->validate([
             'tenant_id' => 'required|exists:users,id',
             'unit_id' => 'required|exists:units,id',
@@ -86,13 +34,16 @@ class BillingController extends Controller
 
         Billing::create(array_merge($request->only([
             'tenant_id', 'unit_id', 'amount', 'period', 'due_date'
-        ]), ['admin_fee' => 10000, 'paid_amount' => 0, 'status' => 'unpaid']));
+        ]), ['admin_fee' => 10000, 'platform_fee' => 2500, 'paid_amount' => 0, 'status' => 'unpaid']));
         
         return redirect()->route('billings.index')->with('success', 'Tagihan berhasil dibuat.');
     }
 
     public function update(Request $request, Billing $billing)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $request->validate([
             'status' => 'required|in:unpaid,paid,overdue',
         ]);

@@ -188,7 +188,7 @@
             <td class="label">Unit Hunian</td>
             <td class="value">: {{ $billing->unit->name }} ({{ ucfirst($billing->unit->type) }})</td>
             <td class="label" style="text-align: right; width: 150px;">Metode Pembayaran</td>
-            <td class="value" style="text-align: right;">: {{ strtoupper($billing->payment_type ?? 'Midtrans/Gateway') }}</td>
+            <td class="value" style="text-align: right;">: {{ strtoupper($billing->payment_type ?? 'Manual/WhatsApp') }}</td>
         </tr>
     </table>
 
@@ -213,6 +213,13 @@
                 <td style="text-align: right;">Rp {{ number_format($billing->admin_fee, 0, ',', '.') }}</td>
             </tr>
             @endif
+            @if(($billing->platform_fee ?? 0) > 0)
+            <tr>
+                <td style="color: #7c3aed;">Biaya Layanan Aplikasi PropVerse</td>
+                <td style="text-align: right; color: #7c3aed;">-</td>
+                <td style="text-align: right; color: #7c3aed;">Rp {{ number_format($billing->platform_fee, 0, ',', '.') }}</td>
+            </tr>
+            @endif
             @if($billing->fine_amount > 0)
             <tr>
                 <td style="color: #dc2626; font-weight: bold;">Denda Keterlambatan Pembayaran</td>
@@ -222,7 +229,7 @@
             @endif
             <tr class="total-row">
                 <td colspan="2" style="text-align: right; padding-right: 12px;">Total Pembayaran</td>
-                <td style="text-align: right; color: #b75c1c;">Rp {{ number_format($billing->amount + ($billing->admin_fee ?? 0) + ($billing->fine_amount ?? 0), 0, ',', '.') }}</td>
+                <td style="text-align: right; color: #b75c1c;">Rp {{ number_format($billing->amount + ($billing->admin_fee ?? 0) + ($billing->platform_fee ?? 0) + ($billing->fine_amount ?? 0), 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

@@ -77,7 +77,7 @@
                                 </td>
                                 {{-- Aksi --}}
                                 <td class="px-8 py-6 whitespace-nowrap text-right">
-                                    @if(auth()->user()->role !== 'tenant')
+                                    @if(auth()->user()->role === 'admin')
                                         @if($booking->status === 'pending')
                                         <div class="flex items-center justify-end gap-2">
                                             <form action="{{ route('bookings.update', $booking->id) }}" method="POST">

@@ -5,11 +5,13 @@
                 <span class="text-[10px] font-bold uppercase tracking-[0.3em] mb-2 block text-[#b75c1c]">Enterprise Management</span>
                 <h2 class="playfair font-bold text-4xl text-[#3e342f] leading-none tracking-tight">Data Unit Properti</h2>
             </div>
+            @if(auth()->user()->role === 'admin')
             <a href="{{ route('units.create') }}" class="flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-[10px] tracking-widest uppercase text-white transition-all hover:-translate-y-1"
                style="background: linear-gradient(135deg, #b75c1c 0%, #a65319 100%); box-shadow: 0 4px 15px rgba(183,92,28,0.3);">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                 Tambah Unit
             </a>
+            @endif
         </div>
     </x-slot>
 
@@ -134,21 +136,25 @@
                                 </td>
                                 {{-- Aksi --}}
                                 <td class="px-8 py-6 whitespace-nowrap text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <a href="{{ route('units.edit', $unit->id) }}"
-                                           class="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-[rgba(183,92,28,0.1)] text-[#b75c1c] border border-[rgba(183,92,28,0.2)] hover:bg-[rgba(183,92,28,0.2)]">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                        </a>
-                                        <form action="{{ route('units.destroy', $unit->id) }}" method="POST" class="inline"
-                                              onsubmit="return confirm('Hapus properti ini? Semua data terkait properti ini mungkin akan hilang.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </form>
-                                    </div>
+                                    @if(auth()->user()->role === 'admin')
+                                        <div class="flex justify-end gap-2">
+                                            <a href="{{ route('units.edit', $unit->id) }}"
+                                               class="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-[rgba(183,92,28,0.1)] text-[#b75c1c] border border-[rgba(183,92,28,0.2)] hover:bg-[rgba(183,92,28,0.2)]">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </a>
+                                            <form action="{{ route('units.destroy', $unit->id) }}" method="POST" class="inline"
+                                                  onsubmit="return confirm('Hapus properti ini? Semua data terkait properti ini mungkin akan hilang.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-stone-400 font-bold text-xs">-</span>
+                                    @endif
                                 </td>
                             </tr>
                             @empty

@@ -14,14 +14,12 @@ class Billing extends Model
         'unit_id',
         'amount',
         'admin_fee',
+        'platform_fee',
         'fine_amount',
         'paid_amount',
         'period',
         'due_date',
         'status',
-        'snap_token',
-        'midtrans_order_id',
-        'payment_type',
         'last_reminded_at',
     ];
 

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
             $table->text('description');
-            $table->enum('status', ['pending', 'approved', 'rejected', 'completed'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected', 'completed', 'resolved'])->default('pending');
             $table->timestamps();
         });
     }

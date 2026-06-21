@@ -26,6 +26,12 @@ class User extends Authenticatable
         'password',
         'role',
         'status',
+        'photo_url',
+        'phone',
+        'google_id',
+        'google_access_token',
+        'google_refresh_token',
+        'google_token_expires_at',
     ];
 
     /**
@@ -48,12 +54,18 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'google_token_expires_at' => 'datetime',
         ];
     }
 
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'tenant_id');
+    }
+
+    public function googleCalendarEvents()
+    {
+        return $this->hasMany(GoogleCalendarEvent::class);
     }
 
     public function rentals()

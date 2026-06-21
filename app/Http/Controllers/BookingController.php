@@ -70,6 +70,9 @@ class BookingController extends Controller
 
     public function update(Request $request, Booking $booking)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya dapat dilakukan oleh Admin.');
+        }
         $request->validate(['status' => 'required|in:approved,rejected']);
         
         $booking->update(['status' => $request->status]);
@@ -87,26 +90,67 @@ class BookingController extends Controller
             
             // 🔥 ENTERPRISE: AUTO-BILLING
             $startDate = \Carbon\Carbon::parse($booking->start_date);
-            $endDate = \Carbon\Carbon::parse($booking->end_date);
-            $months = max(1, $startDate->diffInMonths($endDate));
-            $amount = $booking->unit->price * $months;
-            
-            Billing::create([
-                'tenant_id' => $booking->tenant_id,
-                'unit_id' => $booking->unit_id,
-                'amount' => $amount,
-                'admin_fee' => 10000,
-                'paid_amount' => 0,
-                'period' => $startDate->translatedFormat('F Y') . ' - ' . $endDate->translatedFormat('F Y'),
-                'due_date' => \Carbon\Carbon::parse($booking->start_date)->addDays(7)->toDateString(),
-                'status' => 'unpaid'
-            ]);
+            $totalPrice = $booking->payment_type === 'sewa' 
+                ? $booking->unit->price * $booking->duration_months 
+                : $booking->unit->price;
+
+            $remainingAmount = $totalPrice - $booking->dp_amount;
+            $duration = $booking->duration_months;
+
+            // Generate DP billing if dp_amount > 0
+            if ($booking->dp_amount > 0) {
+                Billing::create([
+                    'tenant_id'   => $booking->tenant_id,
+                    'unit_id'     => $booking->unit_id,
+                    'amount'      => $booking->dp_amount,
+                    'admin_fee'   => 10000,
+                    'paid_amount' => 0,
+                    'period'      => 'DP Awal - ' . $booking->unit->name,
+                    'due_date'    => $startDate->toDateString(),
+                    'status'      => 'unpaid'
+                ]);
+            }
+
+            if ($remainingAmount > 0 && $duration > 0) {
+                $baseInstallment = round($remainingAmount / $duration, 2);
+                $dueDay = $booking->due_day ?? $startDate->day;
+                if ($dueDay > 28) {
+                    $dueDay = 28;
+                }
+
+                for ($i = 0; $i < $duration; $i++) {
+                    // Calculate exact amount for this month to handle rounding issues on the last installment
+                    $amountForThisMonth = ($i === $duration - 1) 
+                        ? ($remainingAmount - ($baseInstallment * ($duration - 1))) 
+                        : $baseInstallment;
+
+                    $installmentDate = $startDate->copy()->addMonths($i);
+                    $dueDate = $installmentDate->copy()->day($dueDay);
+                    if ($dueDate->lt($startDate)) {
+                        $dueDate = $startDate->copy();
+                    }
+
+                    $periodLabel = $booking->payment_type === 'cicilan' ? 'Cicilan' : 'Sewa';
+                    $period = $periodLabel . ' Bulan ' . $installmentDate->translatedFormat('F Y');
+
+                    Billing::create([
+                        'tenant_id'   => $booking->tenant_id,
+                        'unit_id'     => $booking->unit_id,
+                        'amount'      => $amountForThisMonth,
+                        'admin_fee'   => 10000,
+                        'paid_amount' => 0,
+                        'period'      => $period,
+                        'due_date'    => $dueDate->toDateString(),
+                        'status'      => 'unpaid'
+                    ]);
+                }
+            }
             
             Activity::create([
                 'user_id'    => auth()->id(),
                 'action'     => 'Booking Approved',
                 'module'     => 'booking',
-                'description'=> 'Approved booking & Auto-generated billing for ' . $booking->unit->name . ' (Tenant: ' . $booking->tenant->name . ')',
+                'description'=> 'Approved booking & Auto-generated billing schedule for ' . $booking->unit->name . ' (Tenant: ' . $booking->tenant->name . ')',
                 'ip_address' => $request->ip(),
             ]);
         } else {

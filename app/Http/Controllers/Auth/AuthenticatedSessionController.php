@@ -26,6 +26,13 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        if (auth()->user()->role === 'tenant') {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')->withErrors(['email' => 'Akun Penyewa (Tenant) hanya dapat masuk melalui aplikasi mobile.']);
+        }
+
         if (auth()->user()->status !== 'approved') {
             $status = auth()->user()->status;
             Auth::guard('web')->logout();

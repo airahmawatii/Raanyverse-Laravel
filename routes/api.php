@@ -3,17 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
-use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\GoogleAuthController;
+use App\Http\Controllers\Api\CalendarController;
 
 // =====================================================================
 // PUBLIC ROUTES (no auth required)
 // =====================================================================
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/google-login', [AuthController::class, 'googleLogin']);
+Route::post('/google-login', [GoogleAuthController::class, 'apiGoogleLogin']);
+Route::post('/forgot-password/reset', [AuthController::class, 'forgotPasswordReset']);
 
-// Duitku payment webhook — must be public (called by Duitku servers)
-Route::post('/payments/notification', [PaymentController::class, 'handleNotification']);
+
 
 // =====================================================================
 // PROTECTED ROUTES (Sanctum token required)
@@ -24,6 +25,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/profile/photo', [AuthController::class, 'updateProfilePhoto']);
+    Route::post('/profile/connect-google', [GoogleAuthController::class, 'connectGoogle']);
+
+    // --- Google Calendar Sync & Events ---
+    Route::get('/calendar/status', [CalendarController::class, 'getStatus']);
+    Route::post('/calendar/sync-import', [CalendarController::class, 'syncImport']);
+    Route::get('/calendar/events', [CalendarController::class, 'getEvents']);
 
     // --- Units ---
     Route::get('/units', [TenantController::class, 'getUnits']);
@@ -37,7 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Billings & Payment ---
     Route::get('/billings', [TenantController::class, 'getBillings']);
-    Route::post('/billings/{id}/pay', [TenantController::class, 'payBilling']);
+    Route::get('/billings/{id}/receipt', [TenantController::class, 'downloadReceipt']);
 
     // --- Complaints ---
     Route::get('/complaints', [TenantController::class, 'getComplaints']);
