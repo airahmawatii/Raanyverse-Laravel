@@ -54,7 +54,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Tipe Unit</label>
-                            <input type="text" name="type" required class="w-full bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)] rounded-xl px-4 py-3 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all" placeholder="Contoh: Type 36, Type 45">
+                            <select name="type" required class="w-full bg-[#fdfbf7] border border-[rgba(183,92,28,0.1)] rounded-xl px-4 py-3 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all appearance-none">
+                                <option value="">Pilih Tipe Unit</option>
+                                <option value="standar">Standar</option>
+                                <option value="deluxe">Deluxe</option>
+                                <option value="premium">Premium</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Harga (Per Bulan/Tahun)</label>

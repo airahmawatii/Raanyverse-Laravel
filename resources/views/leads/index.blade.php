@@ -89,6 +89,56 @@
                 </div>
             </div>
 
+            {{-- Pagination --}}
+            @if($leads->hasPages())
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+                {{-- Info data --}}
+                <p class="text-xs font-bold text-stone-400">
+                    Menampilkan <span class="text-[#3e342f]">{{ $leads->firstItem() }}–{{ $leads->lastItem() }}</span>
+                    dari <span class="text-[#3e342f]">{{ $leads->total() }}</span> calon penyewa
+                </p>
+
+                {{-- Tombol halaman --}}
+                <div class="flex items-center gap-1">
+                    {{-- Prev --}}
+                    @if($leads->onFirstPage())
+                        <span class="w-9 h-9 rounded-xl inline-flex items-center justify-center text-stone-300 bg-[#fdfbf7] border border-stone-100 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                        </span>
+                    @else
+                        <a href="{{ $leads->previousPageUrl() }}" class="w-9 h-9 rounded-xl inline-flex items-center justify-center text-stone-500 bg-white border border-[rgba(183,92,28,0.15)] shadow-sm hover:bg-[rgba(183,92,28,0.07)] hover:text-[#b75c1c] transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                        </a>
+                    @endif
+
+                    {{-- Page numbers --}}
+                    @foreach($leads->getUrlRange(max(1, $leads->currentPage()-2), min($leads->lastPage(), $leads->currentPage()+2)) as $page => $url)
+                        @if($page == $leads->currentPage())
+                            <span class="w-9 h-9 rounded-xl inline-flex items-center justify-center text-[10px] font-black text-white"
+                                  style="background: linear-gradient(135deg, #d97706 0%, #92400e 100%); box-shadow: 0 4px 12px rgba(183,92,28,0.3);">
+                                {{ $page }}
+                            </span>
+                        @else
+                            <a href="{{ $url }}" class="w-9 h-9 rounded-xl inline-flex items-center justify-center text-[10px] font-black text-stone-500 bg-white border border-[rgba(183,92,28,0.15)] shadow-sm hover:bg-[rgba(183,92,28,0.07)] hover:text-[#b75c1c] transition-all">
+                                {{ $page }}
+                            </a>
+                        @endif
+                    @endforeach
+
+                    {{-- Next --}}
+                    @if($leads->hasMorePages())
+                        <a href="{{ $leads->nextPageUrl() }}" class="w-9 h-9 rounded-xl inline-flex items-center justify-center text-stone-500 bg-white border border-[rgba(183,92,28,0.15)] shadow-sm hover:bg-[rgba(183,92,28,0.07)] hover:text-[#b75c1c] transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    @else
+                        <span class="w-9 h-9 rounded-xl inline-flex items-center justify-center text-stone-300 bg-[#fdfbf7] border border-stone-100 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                        </span>
+                    @endif
+                </div>
+            </div>
+            @endif
+
         </div>
     </div>
 </x-app-layout>

@@ -154,7 +154,7 @@
                                             </a>
                                         </div>
                                         @endif
-                                    @else
+                                    @elseif(auth()->user()->role === 'tenant')
                                         @if($billing->status === 'unpaid')
                                         @php
                                             $totalAmount = $billing->amount + ($billing->admin_fee ?? 0) + ($billing->platform_fee ?? 0) + ($billing->fine_amount ?? 0);
@@ -174,6 +174,20 @@
                                             </a>
                                         </div>
                                         @endif
+                                    @else
+                                        {{-- Owner --}}
+                                        @if($billing->status === 'paid')
+                                        <div class="flex items-center justify-end gap-2">
+                                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-50 border border-emerald-100">
+                                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                            </div>
+                                            <a href="{{ route('billings.receipt', $billing->id) }}" target="_blank" class="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 transition-all" title="Unduh Kuitansi">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            </a>
+                                        </div>
+                                        @else
+                                        <span class="text-[9px] font-bold uppercase tracking-widest text-stone-400">Belum Ada Aksi</span>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>
@@ -184,6 +198,11 @@
                 @if($billings->isEmpty())
                 <div class="text-center py-20">
                     <p class="text-stone-500 font-bold text-xs uppercase tracking-widest">Belum ada tagihan.</p>
+                </div>
+                @endif
+                @if($billings->hasPages())
+                <div class="px-8 py-5 border-t border-stone-100 bg-[#fdfbf7]">
+                    {{ $billings->links() }}
                 </div>
                 @endif
             </div>

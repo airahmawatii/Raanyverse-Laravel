@@ -14,6 +14,13 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/google-login', [GoogleAuthController::class, 'apiGoogleLogin']);
 Route::post('/forgot-password/reset', [AuthController::class, 'forgotPasswordReset']);
 
+// Route test - bisa langsung dibuka di browser untuk cek API aktif
+Route::get('/ping', function () {
+    return response()->json([
+        'status'  => 'success',
+        'message' => 'API RaanyVerse-Properti is running! 🚀',
+    ]);
+});
 
 
 // =====================================================================

@@ -127,6 +127,11 @@
                     <p class="text-stone-500 font-bold text-xs uppercase tracking-widest">Tidak ada permintaan pemesanan.</p>
                 </div>
                 @endif
+                @if($bookings->hasPages())
+                <div class="px-8 py-5 border-t border-stone-100 bg-[#fdfbf7]">
+                    {{ $bookings->links() }}
+                </div>
+                @endif
             </div>
         </div>
     </div>

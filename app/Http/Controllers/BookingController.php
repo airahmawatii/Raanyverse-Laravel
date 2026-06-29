@@ -14,7 +14,7 @@ class BookingController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->get();
+        $bookings = Booking::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->paginate(10);
         return view('bookings.index', compact('bookings'));
     }
 
@@ -56,6 +56,10 @@ class BookingController extends Controller
             'end_date' => $end_date,
             'status' => 'pending'
         ]);
+
+        // Notify Admins/Owners about new booking
+        $admins = \App\Models\User::whereIn('role', ['admin', 'owner'])->get();
+        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\BookingReminder("Pesanan baru untuk unit {$booking->unit->name} dari " . auth()->user()->name, 'info'));
 
         Activity::create([
             'user_id'    => auth()->id(),

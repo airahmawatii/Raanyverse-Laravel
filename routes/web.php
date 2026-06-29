@@ -20,6 +20,8 @@ Route::get('/', function () {
     return view('welcome', compact('units'));
 });
 
+
+
 Route::get('/dashboard', function () {
     $role = Auth::user()->role;
     $user = Auth::user();

@@ -13,11 +13,11 @@ class MaintenanceController extends Controller
     {
         // Jika tenant, hanya lihat maintenance milik mereka
         if (auth()->user()->role === 'tenant') {
-            $maintenances = Maintenance::with(['unit'])->where('tenant_id', auth()->id())->orderBy('created_at', 'desc')->get();
+            $maintenances = Maintenance::with(['unit'])->where('tenant_id', auth()->id())->orderBy('created_at', 'desc')->paginate(10);
             return view('maintenances.index', compact('maintenances'));
         }
 
-        $maintenances = Maintenance::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->get();
+        $maintenances = Maintenance::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->paginate(10);
         return view('maintenances.index', compact('maintenances'));
     }
 

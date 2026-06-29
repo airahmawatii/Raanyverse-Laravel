@@ -7,7 +7,7 @@
             </div>
             <div class="hidden md:flex items-center gap-2 bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)] rounded-full px-4 py-2">
                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                <span class="text-[10px] font-black text-[#b75c1c] uppercase tracking-widest">Tersedia {{ $units->where('status', 'available')->count() }} Properti</span>
+                <span class="text-[10px] font-black text-[#b75c1c] uppercase tracking-widest">Tersedia {{ \App\Models\Unit::where('status', 'available')->count() }} Properti</span>
             </div>
         </div>
     </x-slot>
@@ -87,6 +87,11 @@
                     </div>
                 @endforelse
             </div>
+            @if($units->hasPages())
+            <div class="mt-8">
+                {{ $units->links() }}
+            </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

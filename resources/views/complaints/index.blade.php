@@ -114,6 +114,11 @@
                     <p class="text-slate-600 font-black text-xs uppercase tracking-widest">Tidak ada laporan kendala.</p>
                 </div>
                 @endif
+                @if($complaints->hasPages())
+                <div class="px-8 py-5 border-t border-stone-100">
+                    {{ $complaints->links() }}
+                </div>
+                @endif
             </div>
         </div>
     </div>

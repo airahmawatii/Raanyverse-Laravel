@@ -40,8 +40,8 @@
     <nav class="fixed top-0 inset-x-0 z-50 px-4 md:px-8 pt-5">
         <div class="max-w-6xl mx-auto flex justify-between items-center nav-glass px-6 py-4 rounded-2xl">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-[#3e342f] shadow-md">
-                    <svg class="w-5 h-5 text-[#b75c1c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-stone-100 shadow-sm overflow-hidden">
+                    <img src="{{ asset('logo-raanyprop.png') }}" alt="Logo" class="w-7 h-7 object-contain">
                 </div>
                 <span class="playfair text-xl font-bold tracking-tight text-[#3e342f]">RaanyProp</span>
             </div>
@@ -357,8 +357,8 @@
             {{-- Col 1: Brand --}}
             <div class="space-y-4">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-[#b75c1c] flex items-center justify-center">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                        <img src="{{ asset('logo-raanyprop.png') }}" alt="Logo" class="w-6 h-6 object-contain">
                     </div>
                     <span class="playfair text-lg font-bold text-white">RaanyProp</span>
                 </div>

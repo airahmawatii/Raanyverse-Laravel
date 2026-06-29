@@ -440,7 +440,61 @@ class TenantController extends Controller
     {
         $activities = Activity::where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($act) {
+                $status = null;
+                $desc = strtolower($act->description);
+                $action = strtolower($act->action);
+
+                // Jika modul komplain, cari data komplain terkait dan ambil status aslinya
+                if ($act->module === 'complaint') {
+                    // Cari ID komplain dari deskripsi (misal: "Complaint #5 ...")
+                    preg_match('/complaint\s+#(\d+)/i', $act->description, $matches);
+                    $complaintId = $matches[1] ?? null;
+                    if ($complaintId) {
+                        $complaint = \App\Models\Complaint::find($complaintId);
+                        if ($complaint) {
+                            $status = $complaint->status; // pending, approved, completed
+                        }
+                    } else {
+                        // Fallback: cari komplain terbaru milik user
+                        $complaint = \App\Models\Complaint::where('tenant_id', $act->user_id)->latest()->first();
+                        if ($complaint) {
+                            $status = $complaint->status;
+                        }
+                    }
+                }
+                
+                // Jika modul maintenance, cari status aslinya
+                if ($act->module === 'maintenance') {
+                    preg_match('/maintenance\s+#(\d+)/i', $act->description, $matches);
+                    $maintenanceId = $matches[1] ?? null;
+                    if ($maintenanceId) {
+                        $maint = \App\Models\Maintenance::find($maintenanceId);
+                        if ($maint) {
+                            $status = $maint->status; // pending, approved, completed
+                        }
+                    } else {
+                        $maint = \App\Models\Maintenance::where('tenant_id', $act->user_id)->latest()->first();
+                        if ($maint) {
+                            $status = $maint->status;
+                        }
+                    }
+                }
+
+                // Jika modul booking, ambil status sewa terupdate
+                if ($act->module === 'booking') {
+                    $booking = \App\Models\Booking::where('tenant_id', $act->user_id)->latest()->first();
+                    if ($booking) {
+                        $status = $booking->status; // pending, approved, rejected, cancelled
+                    }
+                }
+
+                // Tambahkan field dynamic_status ke response
+                $act->dynamic_status = $status;
+                return $act;
+            });
+
         return response()->json($activities);
     }
 

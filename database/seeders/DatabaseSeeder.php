@@ -139,7 +139,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // 6. Create 100 Units (Properties)
-        $unitTypes = ['Standard', 'Deluxe', 'Premium', 'VIP'];
+        $unitTypes = ['standar', 'deluxe', 'premium', 'vip'];
         $propertyTypes = ['Rumah', 'Ruko', 'Apartemen', 'Kost'];
         $statuses = ['available', 'occupied', 'maintenance'];
 
@@ -168,7 +168,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Cluster Lavender Blok A-1',
             'blok' => 'A',
             'nomor_unit' => '1',
-            'type' => 'Premium',
+            'type' => 'premium',
             'property_type' => 'Rumah',
             'price' => 5000000,
             'status' => 'occupied',

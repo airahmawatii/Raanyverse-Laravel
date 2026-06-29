@@ -10,12 +10,12 @@ class UnitController extends Controller
 {
     public function index()
     {
-        $units = Unit::with('estate.region')->get();
-
         if (auth()->check() && auth()->user()->role === 'tenant') {
+            $units = Unit::with('estate.region')->latest()->paginate(9);
             return view('units.browse', compact('units'));
         }
 
+        $units = Unit::with('estate.region')->latest()->paginate(10);
         return view('units.index', compact('units'));
     }
 

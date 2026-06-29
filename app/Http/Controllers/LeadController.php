@@ -10,7 +10,7 @@ class LeadController extends Controller
 {
     public function index()
     {
-        $leads = Lead::with('interestedUnit')->latest()->get();
+        $leads = Lead::with('interestedUnit')->latest()->paginate(10);
         return view('leads.index', compact('leads'));
     }
 

@@ -11,7 +11,7 @@ class ComplaintController extends Controller
 {
     public function index()
     {
-        $complaints = Complaint::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->get();
+        $complaints = Complaint::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->paginate(10);
         return view('complaints.index', compact('complaints'));
     }
 
@@ -36,6 +36,10 @@ class ComplaintController extends Controller
             'description' => $request->description,
             'status' => 'pending'
         ]);
+
+        // Notify Admins/Owners about new complaint
+        $admins = \App\Models\User::whereIn('role', ['admin', 'owner'])->get();
+        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\BookingReminder("Komplain baru dari " . auth()->user()->name . " terkait unit {$complaint->unit->name}: {$request->description}", 'info'));
 
         Activity::create([
             'user_id' => auth()->id(),

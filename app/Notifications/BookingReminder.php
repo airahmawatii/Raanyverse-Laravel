@@ -30,8 +30,28 @@ class BookingReminder extends Notification
      */
     public function via(object $notifiable): array
     {
-        // For simulation, we just use database or log.
-        return ['database'];
+        // AnonymousNotifiable (Notification::route) tidak support database channel
+        if ($notifiable instanceof \Illuminate\Notifications\AnonymousNotifiable) {
+            return ['mail'];
+        }
+        return ['database', 'mail'];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public f  rrrrrunction toMail(object $notifiable): MailMessage
+    {
+        $judul = ucwords(str_replace('_', ' ', $this->type));
+        $nama = optional($notifiable)->name ?? 'Pengguna';
+        
+        return (new MailMessage)
+            ->subject('Notifikasi RaanyProp: ' . $judul)
+            ->greeting('Halo ' . $nama . ',')
+            ->line('Kamu memiliki notifikasi baru.')
+            ->line($this->message)
+            ->action('Buka RaanyProp', url('/'))
+            ->line('Terima kasih telah menggunakan layanan kami!');
     }
 
     /**

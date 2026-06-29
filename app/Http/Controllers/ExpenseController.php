@@ -12,7 +12,7 @@ class ExpenseController extends Controller
     public function index()
     {
         $role = Auth::user()->role;
-        $expenses = Expense::with(['estate', 'user'])->latest('expense_date')->get();
+        $expenses = Expense::with(['estate', 'user'])->latest('expense_date')->paginate(10);
         return view('expenses.index', compact('expenses', 'role'));
     }
 

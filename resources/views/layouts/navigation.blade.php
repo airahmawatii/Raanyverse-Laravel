@@ -3,8 +3,8 @@
     {{-- Top Bar / Mobile Header --}}
     <div class="flex items-center justify-between px-6 py-4 lg:py-8 lg:justify-center border-b border-[rgba(255,255,255,0.05)] lg:border-none shrink-0">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
-            <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-white group-hover:scale-105 transition-all duration-300" style="background: linear-gradient(135deg, #b75c1c 0%, #a65319 100%); box-shadow: 0 4px 15px rgba(183, 92, 28, 0.4);">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center bg-[#1e293b] border border-slate-700/40 group-hover:scale-105 transition-all duration-300 overflow-hidden" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+                <img src="{{ asset('logo-raanyprop.png') }}" alt="Logo" class="w-8 h-8 object-contain">
             </div>
             <span class="playfair text-xl md:text-2xl font-bold tracking-tight text-white leading-none">Raany<span class="text-transparent bg-clip-text bg-gradient-to-r from-[#b75c1c] to-[#a65319]">Prop</span></span>
         </a>

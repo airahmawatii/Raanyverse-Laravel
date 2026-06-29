@@ -11,4 +11,6 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('app:send-reminders')->daily();
 Schedule::command('app:cleanup-ktp')->daily();
 Schedule::command('app:process-daily-tasks')->daily();
+Schedule::command('app:send-payment-reminders')->dailyAt('08:00');
+
 

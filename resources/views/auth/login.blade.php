@@ -3,8 +3,8 @@
         
         <div class="w-full max-w-sm flex flex-col items-center">
             {{-- Logo --}}
-            <div class="w-20 h-20 bg-[#3e342f] rounded-[1.25rem] flex items-center justify-center mb-4 shadow-xl">
-                <svg class="w-10 h-10 text-[#b75c1c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <div class="w-20 h-20 bg-[#1e293b] rounded-[1.5rem] flex items-center justify-center mb-4 shadow-xl overflow-hidden border border-slate-700/40">
+                <img src="{{ asset('logo-raanyprop.png') }}" alt="Logo" class="w-16 h-16 object-contain">
             </div>
             
             <h1 class="playfair text-3xl font-bold text-[#3e342f] mb-1">RaanyProp</h1>

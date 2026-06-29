@@ -117,6 +117,11 @@
                     <p class="text-stone-500 font-black uppercase tracking-widest text-sm outfit">Integritas Aset: 100%. Tidak ada pemeliharaan yang pending.</p>
                 </div>
                 @endif
+                @if($maintenances->hasPages())
+                <div class="px-8 py-5 border-t border-slate-100 bg-[#fdfbf7]">
+                    {{ $maintenances->links() }}
+                </div>
+                @endif
             </div>
         </div>
     </div>

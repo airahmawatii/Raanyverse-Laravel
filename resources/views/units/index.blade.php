@@ -172,6 +172,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if($units->hasPages())
+                <div class="px-8 py-5 border-t border-stone-100 bg-[#fdfbf7]">
+                    {{ $units->links() }}
+                </div>
+                @endif
             </div>
         </div>
     </div>

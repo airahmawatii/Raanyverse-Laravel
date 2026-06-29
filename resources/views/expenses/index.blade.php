@@ -26,7 +26,7 @@
                     </div>
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-1">Total Pengeluaran</p>
-                        <p class="text-2xl font-black text-[#3e342f] outfit">Rp {{ number_format($expenses->sum('amount'), 0, ',', '.') }}</p>
+                        <p class="text-2xl font-black text-[#3e342f] outfit">Rp {{ number_format(\App\Models\Expense::sum('amount'), 0, ',', '.') }}</p>
                     </div>
                 </div>
             </div>
@@ -89,6 +89,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if($expenses->hasPages())
+                <div class="px-8 py-5 border-t border-stone-100 bg-[#fdfbf7]">
+                    {{ $expenses->links() }}
+                </div>
+                @endif
             </div>
 
         </div>

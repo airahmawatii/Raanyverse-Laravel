@@ -55,7 +55,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Tipe Unit</label>
-                            <input type="text" name="type" value="{{ $unit->type }}" required class="w-full bg-white shadow-[0_4px_20px_rgba(62,52,47,0.03)] border border-[rgba(183,92,28,0.1)] rounded-xl px-4 py-3 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all">
+                            <select name="type" required class="w-full bg-[#fdfbf7] border border-[rgba(183,92,28,0.1)] rounded-xl px-4 py-3 text-[#3e342f] focus:outline-none focus:border-[#b75c1c] focus:ring-1 focus:ring-[#b75c1c] transition-all appearance-none">
+                                <option value="standar" {{ $unit->type == 'standar' ? 'selected' : '' }}>Standar</option>
+                                <option value="deluxe" {{ $unit->type == 'deluxe' ? 'selected' : '' }}>Deluxe</option>
+                                <option value="premium" {{ $unit->type == 'premium' ? 'selected' : '' }}>Premium</option>
+                                @if(!in_array($unit->type, ['standar', 'deluxe', 'premium']))
+                                    <option value="{{ $unit->type }}" selected>{{ $unit->type }} (Kustom/Lama)</option>
+                                @endif
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-black text-stone-500 uppercase tracking-widest mb-2">Harga (Per Bulan/Tahun)</label>

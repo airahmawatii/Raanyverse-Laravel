@@ -13,7 +13,7 @@ class BillingController extends Controller
 
     public function index()
     {
-        $billings = Billing::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->get();
+        $billings = Billing::with(['tenant', 'unit'])->orderBy('created_at', 'desc')->paginate(10);
         $tenants = User::where('role', 'tenant')->get();
         $units = Unit::all();
         return view('billings.index', compact('billings', 'tenants', 'units'));
